@@ -1,0 +1,885 @@
+{
+  "timestamp": "2025-09-28T06:54:36.379Z",
+  "version": "2.0.0",
+  "migrationPhase": "ICS-to-Unified",
+  "totalCategories": 3,
+  "categories": [
+    {
+      "items": {
+        "A": [
+          {
+            "nutritionFacts": {
+              "vitamins": [],
+              "minerals": [],
+              "benefits": []
+            },
+            "id": "ant",
+            "name": "Ant",
+            "image": "https://images.unsplash.com/photo-1544717302-de2939b7ef71?w=400",
+            "difficulty": 1,
+            "description": "Small insects that live in colonies and work together to find food.",
+            "facts": [
+              "Ants can carry 50 times their own body weight",
+              "Some ant colonies have millions of ants"
+            ],
+            "tags": [
+              "insect",
+              "small",
+              "colony"
+            ],
+            "uses": [],
+            "status": "published",
+            "approvalStatus": "approved",
+            "images": [],
+            "createdAt": "2025-09-28T06:46:18.966Z",
+            "updatedAt": "2025-09-28T06:46:18.966Z"
+          },
+          {
+            "nutritionFacts": {
+              "vitamins": [],
+              "minerals": [],
+              "benefits": []
+            },
+            "id": "alligator",
+            "name": "Alligator",
+            "image": "https://images.unsplash.com/photo-1596195689404-24d8a8d1c6ea?w=400",
+            "difficulty": 1,
+            "description": "Large reptiles that live in water and have powerful jaws with sharp teeth.",
+            "facts": [
+              "Alligators can hold their breath underwater for up to 24 hours",
+              "They are excellent swimmers"
+            ],
+            "tags": [
+              "reptile",
+              "water",
+              "predator"
+            ],
+            "uses": [],
+            "status": "published",
+            "approvalStatus": "approved",
+            "images": [],
+            "createdAt": "2025-09-28T06:46:18.967Z",
+            "updatedAt": "2025-09-28T06:46:18.967Z"
+          }
+        ],
+        "B": [
+          {
+            "nutritionFacts": {
+              "vitamins": [],
+              "minerals": [],
+              "benefits": []
+            },
+            "id": "bear",
+            "name": "Bear",
+            "image": "https://images.unsplash.com/photo-1446066877558-5c1b9d95255c?w=400",
+            "difficulty": 1,
+            "description": "Large mammals with thick fur that can be found in forests and mountains.",
+            "facts": [
+              "Bears can run up to 30 mph",
+              "They have an excellent sense of smell"
+            ],
+            "tags": [
+              "mammal",
+              "forest",
+              "large"
+            ],
+            "uses": [],
+            "status": "published",
+            "approvalStatus": "approved",
+            "images": [],
+            "createdAt": "2025-09-28T06:46:18.969Z",
+            "updatedAt": "2025-09-28T06:46:18.969Z"
+          },
+          {
+            "nutritionFacts": {
+              "vitamins": [],
+              "minerals": [],
+              "benefits": []
+            },
+            "id": "butterfly",
+            "name": "Butterfly",
+            "image": "https://images.unsplash.com/photo-1444927714506-8492d94b5ba0?w=400",
+            "difficulty": 1,
+            "description": "Beautiful insects with colorful wings that fly from flower to flower.",
+            "facts": [
+              "Butterflies taste with their feet",
+              "They start life as caterpillars"
+            ],
+            "tags": [
+              "insect",
+              "colorful",
+              "flying"
+            ],
+            "uses": [],
+            "status": "published",
+            "approvalStatus": "approved",
+            "images": [],
+            "createdAt": "2025-09-28T06:46:18.970Z",
+            "updatedAt": "2025-09-28T06:46:18.970Z"
+          }
+        ],
+        "C": [
+          {
+            "nutritionFacts": {
+              "vitamins": [],
+              "minerals": [],
+              "benefits": []
+            },
+            "id": "cat",
+            "name": "Cat",
+            "image": "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400",
+            "difficulty": 1,
+            "description": "Furry pets that purr, meow, and love to play with toys and sleep in sunny spots.",
+            "facts": [
+              "Cats sleep 12-16 hours per day",
+              "They have excellent night vision"
+            ],
+            "tags": [
+              "pet",
+              "domestic",
+              "furry"
+            ],
+            "uses": [],
+            "status": "published",
+            "approvalStatus": "approved",
+            "images": [],
+            "createdAt": "2025-09-28T06:46:18.971Z",
+            "updatedAt": "2025-09-28T06:46:18.971Z"
+          },
+          {
+            "nutritionFacts": {
+              "vitamins": [],
+              "minerals": [],
+              "benefits": []
+            },
+            "id": "cow",
+            "name": "Cow",
+            "image": "https://images.unsplash.com/photo-1561133622-43c2bfdaad1e?w=400",
+            "difficulty": 1,
+            "description": "Large farm animals that give us milk and say \"moo\".",
+            "facts": [
+              "Cows have four stomachs",
+              "They can produce up to 7 gallons of milk per day"
+            ],
+            "tags": [
+              "farm",
+              "domestic",
+              "milk"
+            ],
+            "uses": [],
+            "status": "published",
+            "approvalStatus": "approved",
+            "images": [],
+            "createdAt": "2025-09-28T06:46:18.971Z",
+            "updatedAt": "2025-09-28T06:46:18.971Z"
+          }
+        ],
+        "D": [
+          {
+            "nutritionFacts": {
+              "vitamins": [],
+              "minerals": [],
+              "benefits": []
+            },
+            "id": "dog",
+            "name": "Dog",
+            "image": "https://images.unsplash.com/photo-1552053831-71594a27632d?w=400",
+            "difficulty": 1,
+            "description": "Loyal pets that bark, wag their tails, and love to play fetch with humans.",
+            "facts": [
+              "Dogs have a sense of smell 10,000 times stronger than humans",
+              "They can learn over 150 words"
+            ],
+            "tags": [
+              "pet",
+              "domestic",
+              "loyal"
+            ],
+            "uses": [],
+            "status": "published",
+            "approvalStatus": "approved",
+            "images": [],
+            "createdAt": "2025-09-28T06:46:18.973Z",
+            "updatedAt": "2025-09-28T06:46:18.973Z"
+          },
+          {
+            "nutritionFacts": {
+              "vitamins": [],
+              "minerals": [],
+              "benefits": []
+            },
+            "id": "duck",
+            "name": "Duck",
+            "image": "https://images.unsplash.com/photo-1518107616985-bd48568d5c0c?w=400",
+            "difficulty": 1,
+            "description": "Water birds with webbed feet that swim in ponds and quack loudly.",
+            "facts": [
+              "Ducks are waterproof thanks to special oils in their feathers",
+              "They can sleep with one eye open"
+            ],
+            "tags": [
+              "bird",
+              "water",
+              "swimming"
+            ],
+            "uses": [],
+            "status": "published",
+            "approvalStatus": "approved",
+            "images": [],
+            "createdAt": "2025-09-28T06:46:18.974Z",
+            "updatedAt": "2025-09-28T06:46:18.974Z"
+          }
+        ],
+        "E": [
+          {
+            "nutritionFacts": {
+              "vitamins": [],
+              "minerals": [],
+              "benefits": []
+            },
+            "id": "elephant",
+            "name": "Elephant",
+            "image": "https://images.unsplash.com/photo-1549366021-9f761d040a94?w=400",
+            "difficulty": 1,
+            "description": "The largest land animals with long trunks they use like hands.",
+            "facts": [
+              "Elephants can remember friends after decades apart",
+              "They use their trunks for breathing, drinking, and grabbing"
+            ],
+            "tags": [
+              "mammal",
+              "large",
+              "trunk"
+            ],
+            "uses": [],
+            "status": "published",
+            "approvalStatus": "approved",
+            "images": [],
+            "createdAt": "2025-09-28T06:46:18.976Z",
+            "updatedAt": "2025-09-28T06:46:18.976Z"
+          },
+          {
+            "nutritionFacts": {
+              "vitamins": [],
+              "minerals": [],
+              "benefits": []
+            },
+            "id": "eagle",
+            "name": "Eagle",
+            "image": "https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?w=400",
+            "difficulty": 1,
+            "description": "Powerful birds with sharp talons and excellent eyesight that soar high in the sky.",
+            "facts": [
+              "Eagles can see up to 8 times better than humans",
+              "They can fly at speeds up to 100 mph"
+            ],
+            "tags": [
+              "bird",
+              "predator",
+              "flying"
+            ],
+            "uses": [],
+            "status": "published",
+            "approvalStatus": "approved",
+            "images": [],
+            "createdAt": "2025-09-28T06:46:18.976Z",
+            "updatedAt": "2025-09-28T06:46:18.976Z"
+          }
+        ],
+        "F": [],
+        "G": [],
+        "H": [],
+        "I": [],
+        "J": [],
+        "K": [],
+        "L": [],
+        "M": [],
+        "N": [],
+        "O": [],
+        "P": [],
+        "Q": [],
+        "R": [],
+        "S": [],
+        "T": [],
+        "U": [],
+        "V": [],
+        "W": [],
+        "X": [],
+        "Y": [],
+        "Z": []
+      },
+      "imageCollection": {
+        "enabled": true
+      },
+      "metadata": {
+        "totalItems": 10,
+        "viewCount": 0,
+        "avgSessionTime": 0,
+        "lastUpdated": "2025-09-28T06:46:19.002Z"
+      },
+      "_id": "68d8d9ba4498131d40aa521d",
+      "id": "animals",
+      "name": "Animals",
+      "icon": "🐾",
+      "color": "#4F46E5",
+      "difficulty": "Easy",
+      "description": "Discover amazing animals from around the world, from tiny ants to enormous elephants!",
+      "status": "active",
+      "completeness": 5,
+      "tags": [
+        "nature",
+        "wildlife",
+        "educational"
+      ],
+      "ageRange": "3-12 years",
+      "learningObjectives": [
+        "Identify common animals and their names",
+        "Learn about animal habitats and behaviors",
+        "Develop vocabulary and pronunciation skills"
+      ],
+      "createdAt": "2025-09-28T06:46:18.999Z",
+      "updatedAt": "2025-09-28T06:46:18.999Z",
+      "__v": 0
+    },
+    {
+      "items": {
+        "A": [
+          {
+            "nutritionFacts": {
+              "vitamins": [
+                "Vitamin C",
+                "Vitamin A"
+              ],
+              "minerals": [
+                "Potassium"
+              ],
+              "benefits": [
+                "Good for teeth",
+                "High in fiber",
+                "Antioxidants"
+              ]
+            },
+            "id": "apple",
+            "name": "Apple",
+            "image": "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=400",
+            "difficulty": 1,
+            "description": "Sweet, crunchy fruit that comes in red, green, and yellow varieties.",
+            "facts": [
+              "Apples float in water because they are 25% air",
+              "There are over 7,500 varieties of apples"
+            ],
+            "tags": [
+              "fruit",
+              "sweet",
+              "crunchy"
+            ],
+            "uses": [],
+            "status": "published",
+            "approvalStatus": "approved",
+            "images": [],
+            "createdAt": "2025-09-28T06:46:19.054Z",
+            "updatedAt": "2025-09-28T06:46:19.055Z"
+          },
+          {
+            "nutritionFacts": {
+              "vitamins": [
+                "Vitamin K",
+                "Vitamin E"
+              ],
+              "minerals": [
+                "Potassium"
+              ],
+              "benefits": [
+                "Healthy fats",
+                "Good for heart",
+                "Helps absorb nutrients"
+              ]
+            },
+            "id": "avocado",
+            "name": "Avocado",
+            "image": "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=400",
+            "difficulty": 1,
+            "description": "Creamy, green fruit that is healthy and delicious in salads and sandwiches.",
+            "facts": [
+              "Avocados are technically berries",
+              "They ripen after being picked from the tree"
+            ],
+            "tags": [
+              "fruit",
+              "creamy",
+              "healthy"
+            ],
+            "uses": [],
+            "status": "published",
+            "approvalStatus": "approved",
+            "images": [],
+            "createdAt": "2025-09-28T06:46:19.056Z",
+            "updatedAt": "2025-09-28T06:46:19.056Z"
+          }
+        ],
+        "B": [
+          {
+            "nutritionFacts": {
+              "vitamins": [
+                "Vitamin B6",
+                "Vitamin C"
+              ],
+              "minerals": [
+                "Potassium"
+              ],
+              "benefits": [
+                "Quick energy",
+                "Good for muscles",
+                "Helps with sleep"
+              ]
+            },
+            "id": "banana",
+            "name": "Banana",
+            "image": "https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=400",
+            "difficulty": 1,
+            "description": "Yellow, curved fruit that is sweet and perfect for snacks or smoothies.",
+            "facts": [
+              "Bananas are berries, but strawberries are not",
+              "They are naturally radioactive"
+            ],
+            "tags": [
+              "fruit",
+              "sweet",
+              "yellow"
+            ],
+            "uses": [],
+            "status": "published",
+            "approvalStatus": "approved",
+            "images": [],
+            "createdAt": "2025-09-28T06:46:19.058Z",
+            "updatedAt": "2025-09-28T06:46:19.058Z"
+          },
+          {
+            "nutritionFacts": {
+              "vitamins": [
+                "Vitamin C",
+                "Vitamin K",
+                "Folate"
+              ],
+              "minerals": [
+                "Iron",
+                "Calcium"
+              ],
+              "benefits": [
+                "Boosts immunity",
+                "Strong bones",
+                "Good for brain"
+              ]
+            },
+            "id": "broccoli",
+            "name": "Broccoli",
+            "image": "https://images.unsplash.com/photo-1553621042-f6e147245754?w=400",
+            "difficulty": 1,
+            "description": "Green vegetable that looks like a tiny tree and is packed with vitamins.",
+            "facts": [
+              "Broccoli contains more vitamin C than oranges",
+              "It belongs to the cabbage family"
+            ],
+            "tags": [
+              "vegetable",
+              "green",
+              "healthy"
+            ],
+            "uses": [],
+            "status": "published",
+            "approvalStatus": "approved",
+            "images": [],
+            "createdAt": "2025-09-28T06:46:19.059Z",
+            "updatedAt": "2025-09-28T06:46:19.059Z"
+          }
+        ],
+        "C": [
+          {
+            "nutritionFacts": {
+              "vitamins": [
+                "Vitamin A",
+                "Beta-carotene"
+              ],
+              "minerals": [
+                "Potassium"
+              ],
+              "benefits": [
+                "Good for eyes",
+                "Healthy skin",
+                "Immune support"
+              ]
+            },
+            "id": "carrot",
+            "name": "Carrot",
+            "image": "https://images.unsplash.com/photo-1445282768818-728615cc910a?w=400",
+            "difficulty": 1,
+            "description": "Orange root vegetable that is crunchy and sweet, great for healthy snacking.",
+            "facts": [
+              "Carrots were originally purple, not orange",
+              "They can help improve night vision"
+            ],
+            "tags": [
+              "vegetable",
+              "orange",
+              "crunchy"
+            ],
+            "uses": [],
+            "status": "published",
+            "approvalStatus": "approved",
+            "images": [],
+            "createdAt": "2025-09-28T06:46:19.060Z",
+            "updatedAt": "2025-09-28T06:46:19.060Z"
+          },
+          {
+            "nutritionFacts": {
+              "vitamins": [
+                "Vitamin C",
+                "Thiamine"
+              ],
+              "minerals": [
+                "Magnesium"
+              ],
+              "benefits": [
+                "Energy source",
+                "Fiber for digestion",
+                "Antioxidants"
+              ]
+            },
+            "id": "corn",
+            "name": "Corn",
+            "image": "https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=400",
+            "difficulty": 1,
+            "description": "Yellow kernels on a cob that taste sweet and are fun to eat.",
+            "facts": [
+              "Each ear of corn has about 800 kernels in 16 rows",
+              "Corn is used to make many products"
+            ],
+            "tags": [
+              "vegetable",
+              "yellow",
+              "sweet"
+            ],
+            "uses": [],
+            "status": "published",
+            "approvalStatus": "approved",
+            "images": [],
+            "createdAt": "2025-09-28T06:46:19.061Z",
+            "updatedAt": "2025-09-28T06:46:19.061Z"
+          }
+        ],
+        "D": [],
+        "E": [],
+        "F": [],
+        "G": [],
+        "H": [],
+        "I": [],
+        "J": [],
+        "K": [],
+        "L": [],
+        "M": [],
+        "N": [],
+        "O": [],
+        "P": [],
+        "Q": [],
+        "R": [],
+        "S": [],
+        "T": [],
+        "U": [],
+        "V": [],
+        "W": [],
+        "X": [],
+        "Y": [],
+        "Z": []
+      },
+      "imageCollection": {
+        "enabled": true
+      },
+      "metadata": {
+        "totalItems": 6,
+        "viewCount": 0,
+        "avgSessionTime": 0,
+        "lastUpdated": "2025-09-28T06:46:19.072Z"
+      },
+      "_id": "68d8d9bb4498131d40aa5225",
+      "id": "fruits",
+      "name": "Fruits & Vegetables",
+      "icon": "🍎",
+      "color": "#059669",
+      "difficulty": "Easy",
+      "description": "Learn about delicious and nutritious fruits and vegetables from around the world!",
+      "status": "active",
+      "completeness": 3,
+      "tags": [
+        "food",
+        "healthy",
+        "nutrition"
+      ],
+      "ageRange": "2-10 years",
+      "learningObjectives": [
+        "Identify common fruits and vegetables",
+        "Learn about healthy eating habits",
+        "Understand colors, shapes, and sizes"
+      ],
+      "createdAt": "2025-09-28T06:46:19.071Z",
+      "updatedAt": "2025-09-28T06:46:19.071Z",
+      "__v": 0
+    },
+    {
+      "items": {
+        "A": [
+          {
+            "nutritionFacts": {
+              "vitamins": [],
+              "minerals": [],
+              "benefits": []
+            },
+            "technicalFacts": {
+              "speed": "Up to 600 mph",
+              "environment": "Air",
+              "passengers": "100-400 people"
+            },
+            "id": "airplane",
+            "name": "Airplane",
+            "image": "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=400",
+            "difficulty": 1,
+            "description": "Flying machines that carry people and cargo through the sky using wings and engines.",
+            "facts": [
+              "Airplanes can fly at over 500 mph",
+              "The Wright brothers made the first flight in 1903"
+            ],
+            "tags": [
+              "air",
+              "flying",
+              "fast"
+            ],
+            "uses": [],
+            "status": "published",
+            "approvalStatus": "approved",
+            "images": [],
+            "createdAt": "2025-09-28T06:46:19.083Z",
+            "updatedAt": "2025-09-28T06:46:19.083Z"
+          },
+          {
+            "nutritionFacts": {
+              "vitamins": [],
+              "minerals": [],
+              "benefits": []
+            },
+            "technicalFacts": {
+              "speed": "Up to 80 mph (emergency)",
+              "environment": "Road",
+              "passengers": "1-2 patients + crew"
+            },
+            "id": "ambulance",
+            "name": "Ambulance",
+            "image": "https://images.unsplash.com/photo-1551601651-2a8555f1a136?w=400",
+            "difficulty": 1,
+            "description": "Special vehicles that quickly transport sick or injured people to hospitals.",
+            "facts": [
+              "Ambulances have sirens and flashing lights to clear traffic",
+              "They carry medical equipment"
+            ],
+            "tags": [
+              "emergency",
+              "medical",
+              "rescue"
+            ],
+            "uses": [],
+            "status": "published",
+            "approvalStatus": "approved",
+            "images": [],
+            "createdAt": "2025-09-28T06:46:19.084Z",
+            "updatedAt": "2025-09-28T06:46:19.084Z"
+          }
+        ],
+        "B": [
+          {
+            "nutritionFacts": {
+              "vitamins": [],
+              "minerals": [],
+              "benefits": []
+            },
+            "technicalFacts": {
+              "speed": "10-20 mph",
+              "environment": "Road/path",
+              "passengers": "1-2 people"
+            },
+            "id": "bicycle",
+            "name": "Bicycle",
+            "image": "https://images.unsplash.com/photo-1502744688674-c619d1586c9e?w=400",
+            "difficulty": 1,
+            "description": "Two-wheeled vehicles powered by pedaling that are fun to ride and eco-friendly.",
+            "facts": [
+              "Bicycles are the most efficient form of human transportation",
+              "They were invented in the 1880s"
+            ],
+            "tags": [
+              "pedal",
+              "eco-friendly",
+              "exercise"
+            ],
+            "uses": [],
+            "status": "published",
+            "approvalStatus": "approved",
+            "images": [],
+            "createdAt": "2025-09-28T06:46:19.085Z",
+            "updatedAt": "2025-09-28T06:46:19.085Z"
+          },
+          {
+            "nutritionFacts": {
+              "vitamins": [],
+              "minerals": [],
+              "benefits": []
+            },
+            "technicalFacts": {
+              "speed": "25-55 mph",
+              "environment": "Road",
+              "passengers": "40-80 people"
+            },
+            "id": "bus",
+            "name": "Bus",
+            "image": "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=400",
+            "difficulty": 1,
+            "description": "Large vehicles that carry many passengers along set routes in cities and towns.",
+            "facts": [
+              "School buses are yellow for safety and visibility",
+              "City buses can carry 40-60 people"
+            ],
+            "tags": [
+              "public",
+              "large",
+              "passengers"
+            ],
+            "uses": [],
+            "status": "published",
+            "approvalStatus": "approved",
+            "images": [],
+            "createdAt": "2025-09-28T06:46:19.086Z",
+            "updatedAt": "2025-09-28T06:46:19.086Z"
+          }
+        ],
+        "C": [
+          {
+            "nutritionFacts": {
+              "vitamins": [],
+              "minerals": [],
+              "benefits": []
+            },
+            "technicalFacts": {
+              "speed": "25-80 mph",
+              "environment": "Road",
+              "passengers": "2-8 people"
+            },
+            "id": "car",
+            "name": "Car",
+            "image": "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=400",
+            "difficulty": 1,
+            "description": "Personal vehicles with four wheels that families use to travel around town.",
+            "facts": [
+              "The first cars were built in the 1880s",
+              "Modern cars have computers and safety features"
+            ],
+            "tags": [
+              "personal",
+              "family",
+              "wheels"
+            ],
+            "uses": [],
+            "status": "published",
+            "approvalStatus": "approved",
+            "images": [],
+            "createdAt": "2025-09-28T06:46:19.088Z",
+            "updatedAt": "2025-09-28T06:46:19.088Z"
+          },
+          {
+            "nutritionFacts": {
+              "vitamins": [],
+              "minerals": [],
+              "benefits": []
+            },
+            "technicalFacts": {
+              "speed": "3-6 mph",
+              "environment": "Water",
+              "passengers": "1-3 people"
+            },
+            "id": "canoe",
+            "name": "Canoe",
+            "image": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400",
+            "difficulty": 1,
+            "description": "Small boats powered by paddles, perfect for exploring rivers and lakes.",
+            "facts": [
+              "Canoes have been used for thousands of years",
+              "They are very quiet on the water"
+            ],
+            "tags": [
+              "water",
+              "paddle",
+              "quiet"
+            ],
+            "uses": [],
+            "status": "published",
+            "approvalStatus": "approved",
+            "images": [],
+            "createdAt": "2025-09-28T06:46:19.089Z",
+            "updatedAt": "2025-09-28T06:46:19.089Z"
+          }
+        ],
+        "D": [],
+        "E": [],
+        "F": [],
+        "G": [],
+        "H": [],
+        "I": [],
+        "J": [],
+        "K": [],
+        "L": [],
+        "M": [],
+        "N": [],
+        "O": [],
+        "P": [],
+        "Q": [],
+        "R": [],
+        "S": [],
+        "T": [],
+        "U": [],
+        "V": [],
+        "W": [],
+        "X": [],
+        "Y": [],
+        "Z": []
+      },
+      "imageCollection": {
+        "enabled": true
+      },
+      "metadata": {
+        "totalItems": 6,
+        "viewCount": 0,
+        "avgSessionTime": 0,
+        "lastUpdated": "2025-09-28T06:46:19.099Z"
+      },
+      "_id": "68d8d9bb4498131d40aa5228",
+      "id": "transportation",
+      "name": "Transportation",
+      "icon": "🚗",
+      "color": "#DC2626",
+      "difficulty": "Easy",
+      "description": "Explore different ways people and things travel from place to place!",
+      "status": "active",
+      "completeness": 3,
+      "tags": [
+        "vehicles",
+        "travel",
+        "technology"
+      ],
+      "ageRange": "3-10 years",
+      "learningObjectives": [
+        "Identify different modes of transportation",
+        "Learn about how vehicles work",
+        "Understand travel and movement concepts"
+      ],
+      "createdAt": "2025-09-28T06:46:19.098Z",
+      "updatedAt": "2025-09-28T06:46:19.098Z",
+      "__v": 0
+    }
+  ]
+}

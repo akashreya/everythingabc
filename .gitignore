@@ -127,3 +127,14 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+# Ignore environment files
+.env
+.env.local
+.env.*.local
+
+# Ignore temp files
+temp/
+*.tmp
+
+# Ignore backups
+backups/
