@@ -316,7 +316,7 @@ function App() {
                       )})`,
                     }}
                   >
-                    {categoryImages[category.id] ? (
+                    {categoryImages[category.id] && getImageUrl(categoryImages[category.id]) ? (
                       <div className="relative w-full h-full">
                         {/* Category Preview Image */}
                         <img
@@ -573,22 +573,24 @@ function CategoryView({ category, onBack, isDarkMode, toggleDarkMode }) {
                 {letterHasItems && displayItem ? (
                   <div className="h-full flex flex-col">
                     <div className="flex-1 relative min-h-0">
-                      <img
-                        src={getImageUrl(displayItem.image)}
-                        alt={displayItem.imageAlt || displayItem.name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.target.style.display = "none";
-                          e.target.nextSibling.style.display = "flex";
-                        }}
-                      />
+                      {displayItem.image && getImageUrl(displayItem.image) ? (
+                        <img
+                          src={getImageUrl(displayItem.image)}
+                          alt={displayItem.imageAlt || displayItem.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.style.display = "none";
+                            e.target.nextSibling.style.display = "flex";
+                          }}
+                        />
+                      ) : null}
                       <div
                         className="w-full h-full flex items-center justify-center text-4xl"
                         style={{
                           backgroundColor:
                             getCategoryGradient(category.color).split(",")[0] +
                             "20",
-                          display: "none",
+                          display: displayItem.image && getImageUrl(displayItem.image) ? "none" : "flex",
                         }}
                       >
                         📷
@@ -757,20 +759,20 @@ function ItemView({
       </header>
 
       {/* Item Display with Carousel Navigation */}
-      <div className="max-w-full mx-auto px-4 py-12">
-        <div className="flex items-center justify-center space-x-16">
+      <div className="max-w-full mx-auto px-2 sm:px-4 py-6 sm:py-12">
+        <div className="flex items-center justify-center space-x-2 sm:space-x-8 md:space-x-16">
           {/* Previous Letter Button */}
           <button
             onClick={goToPreviousLetter}
             disabled={currentLetterIndex === 0}
-            className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
+            className={`w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
               currentLetterIndex === 0
                 ? "bg-gray-100 text-gray-300 cursor-not-allowed"
                 : "bg-white text-gray-600 hover:bg-blue-50 hover:text-blue-600 shadow-lg hover:shadow-xl"
             }`}
           >
             <svg
-              className="w-8 h-8"
+              className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -785,30 +787,32 @@ function ItemView({
           </button>
 
           {/* Item Card */}
-          <div className="bg-white rounded-3xl shadow-2xl overflow-hidden w-full max-w-6xl">
+          <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden w-full max-w-6xl">
             <div className="aspect-[4/3] relative">
-              <img
-                src={getImageUrl(currentItem.image)}
-                alt={currentItem.imageAlt || currentItem.name}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.target.style.display = "none";
-                  e.target.nextSibling.style.display = "flex";
-                }}
-              />
+              {currentItem.image && getImageUrl(currentItem.image) ? (
+                <img
+                  src={getImageUrl(currentItem.image)}
+                  alt={currentItem.imageAlt || currentItem.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.style.display = "none";
+                    e.target.nextSibling.style.display = "flex";
+                  }}
+                />
+              ) : null}
               <div
-                className="w-full h-full flex items-center justify-center text-6xl"
+                className="w-full h-full flex items-center justify-center text-4xl sm:text-6xl"
                 style={{
                   backgroundColor:
                     getCategoryGradient(category.color).split(",")[0] + "20",
-                  display: "none",
+                  display: currentItem.image && getImageUrl(currentItem.image) ? "none" : "flex",
                 }}
               >
                 📷
               </div>
-              <div className="absolute top-6 left-6">
+              <div className="absolute top-3 left-3 sm:top-6 sm:left-6">
                 <div
-                  className="w-20 h-20 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg"
+                  className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center text-white text-xl sm:text-2xl md:text-3xl font-bold shadow-lg"
                   style={{
                     backgroundColor: getCategoryGradient(category.color).split(
                       ","
@@ -820,29 +824,29 @@ function ItemView({
               </div>
             </div>
 
-            <div className="p-12 text-center">
-              <h2 className="text-6xl font-bold text-gray-900 mb-6">
+            <div className="p-4 sm:p-8 md:p-12 text-center">
+              <h2 className="text-3xl sm:text-5xl md:text-6xl font-bold text-gray-900 mb-3 sm:mb-6">
                 {currentItem.name}
               </h2>
 
-              <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+              <p className="text-base sm:text-lg md:text-xl text-gray-600 mb-4 sm:mb-8 leading-relaxed">
                 {currentItem.description}
               </p>
 
               {currentItem.facts && currentItem.facts.length > 0 && (
-                <div className="bg-blue-50 rounded-xl p-6 mb-8">
-                  <p className="text-blue-800 font-medium text-lg">
+                <div className="bg-blue-50 rounded-xl p-4 sm:p-6 mb-4 sm:mb-8">
+                  <p className="text-blue-800 font-medium text-sm sm:text-base md:text-lg">
                     💡 {currentItem.facts[0]}
                   </p>
                 </div>
               )}
 
               {currentItem.tags && currentItem.tags.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-3 mb-8">
+                <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-4 sm:mb-8">
                   {currentItem.tags.slice(0, 5).map((tag) => (
                     <span
                       key={tag}
-                      className="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-base"
+                      className="px-3 py-1 sm:px-4 sm:py-2 bg-gray-100 text-gray-700 rounded-full text-sm sm:text-base"
                     >
                       {tag}
                     </span>
@@ -851,10 +855,10 @@ function ItemView({
               )}
 
               {hasMultiple && (
-                <div className="flex items-center justify-center space-x-4 mt-8">
+                <div className="flex items-center justify-center space-x-3 sm:space-x-4 mt-4 sm:mt-8">
                   <button
                     onClick={handlePrevItem}
-                    className="px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors font-medium"
+                    className="px-4 py-2 sm:px-6 sm:py-3 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors font-medium text-sm sm:text-base"
                   >
                     Previous
                   </button>
@@ -872,7 +876,7 @@ function ItemView({
                   </div>
                   <button
                     onClick={handleNextItem}
-                    className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl transition-colors font-medium"
+                    className="px-4 py-2 sm:px-6 sm:py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl transition-colors font-medium text-sm sm:text-base"
                   >
                     Next
                   </button>
@@ -885,14 +889,14 @@ function ItemView({
           <button
             onClick={goToNextLetter}
             disabled={currentLetterIndex === lettersWithItems.length - 1}
-            className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
+            className={`w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
               currentLetterIndex === lettersWithItems.length - 1
                 ? "bg-gray-100 text-gray-300 cursor-not-allowed"
                 : "bg-white text-gray-600 hover:bg-blue-50 hover:text-blue-600 shadow-lg hover:shadow-xl"
             }`}
           >
             <svg
-              className="w-8 h-8"
+              className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -908,9 +912,9 @@ function ItemView({
         </div>
 
         {/* Letter Indicator */}
-        <div className="text-center mt-6">
-          <div className="inline-flex items-center px-4 py-2 bg-white rounded-full shadow-sm border">
-            <span className="text-sm font-medium text-gray-600">
+        <div className="text-center mt-4 sm:mt-6">
+          <div className="inline-flex items-center px-3 py-1 sm:px-4 sm:py-2 bg-white rounded-full shadow-sm border">
+            <span className="text-xs sm:text-sm font-medium text-gray-600">
               Letter {letter} • {currentLetterIndex + 1} of{" "}
               {lettersWithItems.length}
             </span>
