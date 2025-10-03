@@ -1,0 +1,11 @@
+{
+  "short_name": "EverythingABC",
+  "name": "EverythingABC - Visual Vocabulary Platform",
+  "description": "A visual vocabulary platform that makes learning fun for children and gives parents confidence in their child's educational journey.",
+  "icons": [],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#8b5cf6",
+  "background_color": "#ffffff",
+  "orientation": "portrait"
+}
