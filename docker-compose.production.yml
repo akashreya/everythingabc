@@ -32,7 +32,7 @@ services:
       - REFRESH_TOKEN_EXPIRES_IN=7d
       - AWS_REGION=ap-south-1
       - AWS_ACCESS_KEY_ID=AKIA4Q2RJFFASK22XZNN
-      - AWS_SECRET_ACCESS_KEY=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
+      - AWS_SECRET_ACCESS_KEY=
       - S3_IMAGES_BUCKET=everything-abc
       - CLOUDFRONT_DOMAIN=dl0gmrcy5edt5.cloudfront.net
     depends_on:
@@ -41,7 +41,13 @@ services:
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3003/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://localhost:3003/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})",
+        ]
       interval: 30s
       timeout: 3s
       retries: 3
