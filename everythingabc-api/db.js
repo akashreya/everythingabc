@@ -1,6 +1,5 @@
 const { MongoClient } = require('mongodb');
 const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server');
 require('dotenv').config();
 
 class Database {
@@ -18,6 +17,7 @@ class Database {
       // Use in-memory MongoDB for development if no local MongoDB
       if (process.env.USE_MEMORY_DB === 'true') {
         console.log('🔧 Starting in-memory MongoDB for development...');
+        const { MongoMemoryServer } = require('mongodb-memory-server');
         this.mongoServer = await MongoMemoryServer.create({
           instance: {
             dbName: 'everythingabc'

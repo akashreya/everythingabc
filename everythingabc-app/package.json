@@ -23,7 +23,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "setup:images": "xcopy /E /I /Y ..\\image-collection-system\\images\\categories public\\images\\categories",
+    "setup:images:unix": "cp -r ../image-collection-system/images/categories public/images/categories"
   },
   "eslintConfig": {
     "extends": [

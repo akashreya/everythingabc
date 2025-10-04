@@ -25,7 +25,7 @@ coverage
 
 # nyc test coverage
 .nyc_output
-
+.claude
 # Grunt intermediate storage (https://gruntjs.com/creating-plugins#storing-task-files)
 .grunt
 
@@ -89,7 +89,9 @@ dist
 # Comment in the public line in if your project uses Gatsby and not Next.js
 # https://nextjs.org/blog/next-9-1#public-directory-support
 # public
-
+everythingabc-app/public/images
+image-collection-system/images
+Plan
 # vuepress build output
 .vuepress/dist
 
@@ -138,3 +140,6 @@ temp/
 
 # Ignore backups
 backups/
+
+# Ignore database exports (included in Docker image instead)
+everythingabc-api/data/categories-export.json

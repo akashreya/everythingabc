@@ -1,0 +1,63 @@
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: everythingabc-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: everythingabc
+    volumes:
+      - mongodb_data:/data/db
+      - ./scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - everythingabc-network
+
+  api:
+    build: ./everythingabc-api
+    image: everythingabc-api:latest
+    container_name: everythingabc-api
+    restart: unless-stopped
+    ports:
+      - "3003:3003"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/everythingabc
+      - NODE_ENV=production
+      - PORT=3003
+      - CORS_ORIGIN=http://localhost:5174
+      - JWT_SECRET=everythingabc-super-secret-key-change-in-production
+      - JWT_EXPIRES_IN=1h
+      - REFRESH_TOKEN_EXPIRES_IN=7d
+      - AWS_REGION=ap-south-1
+      - AWS_ACCESS_KEY_ID=AKIA4Q2RJFFASK22XZNN
+      - AWS_SECRET_ACCESS_KEY=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
+      - S3_IMAGES_BUCKET=everything-abc
+      - CLOUDFRONT_DOMAIN=dl0gmrcy5edt5.cloudfront.net
+    depends_on:
+      - mongodb
+    networks:
+      - everythingabc-network
+
+  # Optional: MongoDB Express for database management
+  mongo-express:
+    image: mongo-express:latest
+    container_name: everythingabc-mongo-express
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongodb
+      ME_CONFIG_MONGODB_PORT: 27017
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin
+    depends_on:
+      - mongodb
+    networks:
+      - everythingabc-network
+
+volumes:
+  mongodb_data:
+
+networks:
+  everythingabc-network:
+    driver: bridge

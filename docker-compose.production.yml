@@ -1,0 +1,56 @@
+# Docker Compose for EC2 Production Deployment
+# Update CORS_ORIGIN with your Vercel frontend URL after deployment
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: everythingabc-mongodb
+    restart: unless-stopped
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - app-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/everythingabc --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    image: akashreya/everythingabc-api:latest
+    container_name: everythingabc-api
+    restart: unless-stopped
+    ports:
+      - "3003:3003"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/everythingabc
+      - NODE_ENV=production
+      - PORT=3003
+      - CORS_ORIGIN=https://your-app.vercel.app
+      - JWT_SECRET=CHANGE_THIS_TO_STRONG_SECRET_IN_PRODUCTION
+      - JWT_EXPIRES_IN=1h
+      - REFRESH_TOKEN_EXPIRES_IN=7d
+      - AWS_REGION=ap-south-1
+      - AWS_ACCESS_KEY_ID=AKIA4Q2RJFFASK22XZNN
+      - AWS_SECRET_ACCESS_KEY=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
+      - S3_IMAGES_BUCKET=everything-abc
+      - CLOUDFRONT_DOMAIN=dl0gmrcy5edt5.cloudfront.net
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3003/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  mongodb_data:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge

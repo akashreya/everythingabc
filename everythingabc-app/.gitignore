@@ -21,3 +21,6 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Local development images (served from public folder in dev, CDN in prod)
+/public/images/categories
