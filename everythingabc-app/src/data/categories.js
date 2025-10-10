@@ -64,22 +64,21 @@ export const categoriesData = {
           updatedAt: '2025-01-01T00:00:00Z'
         }
       ],
-      D: [
+      X: [
         {
-          id: 'dog',
-          name: 'Dog',
-          image: '/images/animals/dog.webp',
-          imageAlt: 'A friendly dog with its tongue out',
-          difficulty: 1,
-          pronunciation: 'dog',
-          description: 'Loyal pets that love to play and protect their families',
-          facts: ['Dogs can understand up to 250 words'],
-          tags: ['pet', 'domestic', 'loyal'],
+          id: 'xantus',
+          name: 'Xantus',
+          image: '/images/animals/X/xantus/medium/xantus_murrelet_pixabay_12345_1755000000000_medium.webp',
+          imageAlt: 'A Xantus murrelet bird swimming in the ocean',
+          difficulty: 3,
+          pronunciation: 'zan-tus',
+          description: 'A small seabird found in the Pacific Ocean.',
+          facts: ['Xantus murrelets are known for their distinctive black and white plumage.'],
+          tags: ['bird', 'ocean', 'small'],
           createdAt: '2025-01-01T00:00:00Z',
           updatedAt: '2025-01-01T00:00:00Z'
         }
       ]
-      // Additional letters would be populated here
     }
   },
 

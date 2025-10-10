@@ -55,21 +55,38 @@ router.get('/', asyncHandler(async (req, res) => {
 
   const categories = await Category.find(query).sort(sortOption);
 
-  const formattedCategories = categories.map(category => ({
-    id: category.id,
-    name: category.name,
-    icon: category.icon,
-    color: category.color,
-    difficulty: category.difficulty,
-    description: category.description,
-    completeness: category.completeness,
-    tags: category.tags,
-    metadata: {
-      totalItems: category.metadata.totalItems,
-      viewCount: category.metadata.viewCount
-    },
-    lettersWithItems: category.getLettersWithItems()
-  }));
+  const formattedCategories = categories.map(category => {
+    // Collect all images from the category for preview
+    const allImages = [];
+    if (category.items) {
+      Object.values(category.items).forEach(letterItems => {
+        if (Array.isArray(letterItems)) {
+          letterItems.forEach(item => {
+            if (item && item.image) {
+              allImages.push(item.image);
+            }
+          });
+        }
+      });
+    }
+
+    return {
+      id: category.id,
+      name: category.name,
+      icon: category.icon,
+      color: category.color,
+      difficulty: category.difficulty,
+      description: category.description,
+      completeness: category.completeness,
+      tags: category.tags,
+      metadata: {
+        totalItems: category.metadata.totalItems,
+        viewCount: category.metadata.viewCount
+      },
+      lettersWithItems: category.getLettersWithItems(),
+      sampleImages: allImages // Include all images for slideshow
+    };
+  });
 
   res.json({
     success: true,

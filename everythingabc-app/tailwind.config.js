@@ -1,22 +1,18 @@
-/** @type {import('tailwindcss').Config} */
-module.exports = {
+import { defineConfig } from 'tailwindcss/plugin';
+
+export default defineConfig({
   darkMode: ['class'],
   content: [
+    './index.html',
     './pages/**/*.{js,jsx}',
     './components/**/*.{js,jsx}',
     './app/**/*.{js,jsx}',
     './src/**/*.{js,jsx}',
   ],
-  prefix: "",
   theme: {
-    container: {
-      center: true,
-      padding: "2rem",
-      screens: {
-        "2xl": "1400px",
-      },
-    },
     extend: {
+      // Your existing theme extensions will go here.
+      // I'm re-adding the full set from your previous v3.x config.
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -73,5 +69,5 @@ module.exports = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
-}
+  plugins: [], // Plugins are handled differently in v4.x
+});

@@ -209,6 +209,8 @@ const FlipCard = ({ initialImage, index }) => {
             backgroundImage: `url(${getImageUrl(currentImage)})`,
             backfaceVisibility: "hidden",
           }}
+          role="img"
+          aria-label="Decorative background image"
         />
       </div>
     </div>
