@@ -2,7 +2,7 @@ import React from 'react';
 
 const AppFooter = () => {
   return (
-    <footer className="bg-background border-t py-12">
+    <footer className="bg-background dark:bg-gray-900 border-t dark:border-gray-700 py-12 transition-colors duration-300">
       <div className="max-w-6xl mx-auto px-4 text-center">
         <div className="flex items-center justify-center space-x-2 mb-4">
           <div
@@ -14,11 +14,11 @@ const AppFooter = () => {
           >
             <span className="text-white font-bold text-xs">A</span>
           </div>
-          <span className="font-display text-lg font-bold text-gradient">
+          <span className="font-display text-lg font-bold text-gradient dark:text-white">
             EverythingABC
           </span>
         </div>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground dark:text-gray-400 transition-colors duration-300">
           &copy; {new Date().getFullYear()} EverythingABC. Making education
           joyful for families worldwide.
         </p>
