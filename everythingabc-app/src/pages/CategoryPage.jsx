@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Moon, Sun, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import apiService from "../services/api.js";
 import Breadcrumb from "../components/Breadcrumb.jsx";
+import AppHeader from "../components/AppHeader.jsx";
+import AppFooter from "../components/AppFooter.jsx";
 import { getImageUrl } from "../utils/imageUtils.js";
 import { Helmet } from "react-helmet-async";
 import { useTheme } from '../contexts/ThemeContext.jsx';
@@ -21,7 +22,7 @@ const getCategoryGradient = (gradientString) => {
 };
 
 function CategoryPage() {
-  const { isDarkMode, toggleDarkMode } = useTheme();
+  const { isDarkMode } = useTheme();
   const { categoryId } = useParams();
   const [category, setCategory] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -76,7 +77,7 @@ function CategoryPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-background dark:bg-gray-900 flex items-center justify-center transition-colors duration-300">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
@@ -84,8 +85,8 @@ function CategoryPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center">
-        <p className="text-red-600 text-lg font-medium">Error: {error}</p>
+      <div className="min-h-screen bg-background dark:bg-gray-900 flex flex-col items-center justify-center transition-colors duration-300">
+        <p className="text-red-600 dark:text-red-400 text-lg font-medium">Error: {error}</p>
         <Button onClick={() => window.location.reload()} className="mt-4" variant="outline">
           Retry
         </Button>
@@ -95,8 +96,8 @@ function CategoryPage() {
 
   if (!category) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Category not found.</p>
+      <div className="min-h-screen bg-background dark:bg-gray-900 flex items-center justify-center transition-colors duration-300">
+        <p className="text-muted-foreground dark:text-gray-400">Category not found.</p>
       </div>
     );
   }
@@ -105,7 +106,7 @@ function CategoryPage() {
   const pageDescription = `Explore the ${category.name} category with clear pictures. Learn ${category.name} names from A to Z. Perfect for kids, ESL learners, and visual education.`;
 
   return (
-    <>
+    <div className="min-h-screen bg-background dark:bg-gray-900 transition-colors duration-300">
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
@@ -129,38 +130,30 @@ function CategoryPage() {
         )}
       </Helmet>
 
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      {/* Main App Header */}
+      <AppHeader />
+
+      {/* Secondary Breadcrumb Header */}
+      <header className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 transition-colors duration-300">
         <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Breadcrumb
-                items={[
-                  { label: "Home", path: "/" },
-                  {
-                    label: category.name,
-                    path: `/categories/${category.id}`,
-                    icon: category.icon,
-                  },
-                ]}
-              />
-            </div>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={toggleDarkMode}
-              className="rounded-full"
-            >
-              {isDarkMode ? (
-                <Sun className="w-4 h-4" />
-              ) : (
-                <Moon className="w-4 h-4" />
-              )}
-            </Button>
+          {/* Breadcrumb Row */}
+          <div className="flex items-center space-x-4 mb-3">
+            <Breadcrumb
+              items={[
+                { label: "Home", path: "/" },
+                {
+                  label: category.name,
+                  path: `/categories/${category.id}`,
+                  icon: category.icon,
+                },
+              ]}
+            />
           </div>
-          <div className="mt-3">
-            <h1 className="text-xl font-bold text-gray-900">{category.name}</h1>
-            <p className="text-sm text-gray-600">{category.description}</p>
+
+          {/* Category Info */}
+          <div>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white transition-colors duration-300">{category.name}</h1>
+            <p className="text-sm text-gray-600 dark:text-gray-300 transition-colors duration-300">{category.description}</p>
           </div>
         </div>
       </header>
@@ -171,7 +164,7 @@ function CategoryPage() {
         <div className="flex justify-center mb-6">
           <button
             onClick={randomizeCategory}
-            className="flex items-center space-x-2 px-6 py-3 bg-white border-2 rounded-xl hover:bg-gray-50 transition-colors font-medium shadow-sm"
+            className="flex items-center space-x-2 px-6 py-3 bg-white dark:bg-gray-800 border-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium shadow-sm"
             style={{
               borderColor: getCategoryGradient(category.color).split(",")[0],
             }}
@@ -204,8 +197,8 @@ function CategoryPage() {
                       aspect-square rounded-2xl border-2 transition-all duration-200 overflow-hidden
                       ${
                         letterHasItems
-                          ? "bg-white border-gray-200 hover:border-blue-300 hover:shadow-lg hover:scale-105 cursor-pointer group"
-                          : "bg-gray-50 border-gray-100 opacity-50 pointer-events-none"
+                          ? "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 hover:shadow-lg hover:scale-105 cursor-pointer group"
+                          : "bg-gray-50 dark:bg-gray-700 border-gray-100 dark:border-gray-600 opacity-50 pointer-events-none"
                       }
                     `}
                   >
@@ -246,13 +239,13 @@ function CategoryPage() {
                           </div>
                         </div>
                       </div>
-                      <div className="p-2 bg-white h-10 flex-shrink-0 flex items-center justify-center">
+                      <div className="p-2 bg-white dark:bg-gray-800 h-10 flex-shrink-0 flex items-center justify-center transition-colors duration-300">
                         <div className="text-center w-full">
-                          <div className="text-xs font-medium text-gray-900 truncate">
+                          <div className="text-xs font-medium text-gray-900 dark:text-white truncate transition-colors duration-300">
                             {displayItem?.name || "No name"}
                           </div>
                           {items.length > 1 && (
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-gray-500 dark:text-gray-400 transition-colors duration-300">
                               +{items.length - 1} more
                             </div>
                           )}
@@ -264,19 +257,19 @@ function CategoryPage() {
                   <div
                     className={`
                       aspect-square rounded-2xl border-2 transition-all duration-200 overflow-hidden
-                      bg-gray-50 border-gray-100 opacity-50 pointer-events-none
+                      bg-gray-50 dark:bg-gray-700 border-gray-100 dark:border-gray-600 opacity-50 pointer-events-none
                     `}
                   >
                     <div className="h-full flex flex-col items-center justify-center">
                       <div
                         className={`
                         text-2xl font-bold mb-2
-                        text-gray-400
+                        text-gray-400 dark:text-gray-500
                       `}
                       >
                         {letter}
                       </div>
-                      <div className="text-xs text-gray-400">Coming soon</div>
+                      <div className="text-xs text-gray-400 dark:text-gray-500">Coming soon</div>
                     </div>
                   </div>
                 )}
@@ -285,7 +278,9 @@ function CategoryPage() {
           })}
         </div>
       </div>
-    </>
+
+      <AppFooter />
+    </div>
   );
 }
 
