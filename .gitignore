@@ -143,3 +143,7 @@ backups/
 
 # Ignore database exports (included in Docker image instead)
 everythingabc-api/data/categories-export.json
+
+# Docker files
+docker-compose*.yml
+Dockerfile*
