@@ -33,7 +33,7 @@ function App() {
   const { isDarkMode, toggleDarkMode } = useTheme();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background dark:bg-gray-900 transition-colors duration-300">
       <AppHeader />
       <HeroSection />
       <CategoriesSection />

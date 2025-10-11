@@ -99,13 +99,13 @@ const CategoriesSection = () => {
   }, [loading, categories]);
 
   return (
-    <section id="categories-section" className="py-20 px-4 bg-background/50">
+    <section id="categories-section" className="py-20 px-4 bg-background/50 dark:bg-gray-800/50 transition-colors duration-300">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
-          <h3 className="text-4xl font-bold mb-4">
+          <h3 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white transition-colors duration-300">
             Explore Learning Categories
           </h3>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-xl text-muted-foreground dark:text-gray-300 max-w-2xl mx-auto transition-colors duration-300">
             Each category is carefully designed to build vocabulary through
             visual learning and interactive play.
           </p>
@@ -119,7 +119,7 @@ const CategoriesSection = () => {
 
         {error && (
           <div className="text-center py-12">
-            <p className="text-red-600 text-lg font-medium">Error: {error}</p>
+            <p className="text-red-600 dark:text-red-400 text-lg font-medium transition-colors duration-300">Error: {error}</p>
             <Button
               onClick={() => window.location.reload()}
               className="mt-4"
@@ -186,16 +186,16 @@ const CategoriesSection = () => {
                     <div className="text-2xl opacity-80">{category.icon}</div>
                   </div>
                 </div>
-                <CardContent className="p-6">
+                <CardContent className="p-6 bg-white dark:bg-gray-800 transition-colors duration-300">
                   <div className="flex items-start justify-between mb-3">
-                    <h4 className="text-xl font-semibold group-hover:text-primary transition-colors">
+                    <h4 className="text-xl font-semibold group-hover:text-primary dark:text-white dark:group-hover:text-blue-400 transition-colors">
                       {category.name}
                     </h4>
-                    <Badge variant="outline">
+                    <Badge variant="outline" className="dark:border-gray-600 dark:text-gray-300">
                       {category.metadata?.totalItems || 0} items
                     </Badge>
                   </div>
-                  <p className="text-muted-foreground text-sm leading-relaxed">
+                  <p className="text-muted-foreground dark:text-gray-400 text-sm leading-relaxed transition-colors duration-300">
                     {category.description}
                   </p>
                 </CardContent>

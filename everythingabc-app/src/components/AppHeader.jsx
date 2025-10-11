@@ -8,7 +8,7 @@ const AppHeader = () => {
   const { isDarkMode, toggleDarkMode } = useTheme();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 dark:bg-gray-800/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:border-gray-700 transition-colors duration-300">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
@@ -21,7 +21,7 @@ const AppHeader = () => {
             >
               <span className="text-white font-bold text-sm">A</span>
             </div>
-            <h1 className="font-display text-2xl font-bold text-gradient">
+            <h1 className="font-display text-2xl font-bold text-gradient dark:text-white">
               EverythingABC
             </h1>
           </div>
@@ -29,10 +29,10 @@ const AppHeader = () => {
 
         <div className="flex items-center space-x-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground dark:text-gray-400 w-4 h-4" />
             <Input
               placeholder="Search categories..."
-              className="pl-10 w-64"
+              className="pl-10 w-64 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
             />
           </div>
           <Button

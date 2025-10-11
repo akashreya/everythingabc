@@ -1,7 +1,6 @@
-import { defineConfig } from 'tailwindcss/plugin';
+import { defineConfig } from 'tailwindcss';
 
 export default defineConfig({
-  darkMode: ['class'],
   content: [
     './index.html',
     './pages/**/*.{js,jsx}',
