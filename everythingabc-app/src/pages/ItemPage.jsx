@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Moon, Sun, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import apiService from "../services/api.js";
 import Breadcrumb from "../components/Breadcrumb.jsx";
+import AppHeader from "../components/AppHeader.jsx";
+import AppFooter from "../components/AppFooter.jsx";
 import { getImageUrl } from "../utils/imageUtils.js";
 import { Helmet } from "react-helmet-async";
 import { useTheme } from '../contexts/ThemeContext.jsx';
@@ -21,7 +22,7 @@ const getCategoryGradient = (gradientString) => {
 };
 
 function ItemPage() {
-  const { isDarkMode, toggleDarkMode } = useTheme();
+  const { isDarkMode } = useTheme();
   const { categoryId, letter, itemId } = useParams();
   const [category, setCategory] = useState(null);
   const [items, setItems] = useState([]);
@@ -84,7 +85,7 @@ function ItemPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-background dark:bg-gray-900 flex items-center justify-center transition-colors duration-300">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
@@ -92,8 +93,8 @@ function ItemPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center">
-        <p className="text-red-600 text-lg font-medium">Error: {error}</p>
+      <div className="min-h-screen bg-background dark:bg-gray-900 flex flex-col items-center justify-center transition-colors duration-300">
+        <p className="text-red-600 dark:text-red-400 text-lg font-medium">Error: {error}</p>
         <Button onClick={() => window.location.reload()} className="mt-4" variant="outline">
           Retry
         </Button>
@@ -103,8 +104,8 @@ function ItemPage() {
 
   if (!category || !currentItem) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Item or category not found.</p>
+      <div className="min-h-screen bg-background dark:bg-gray-900 flex items-center justify-center transition-colors duration-300">
+        <p className="text-muted-foreground dark:text-gray-400">Item or category not found.</p>
       </div>
     );
   }
@@ -113,7 +114,7 @@ function ItemPage() {
   const pageDescription = currentItem.description || `Learn about ${currentItem.name} in the ${category.name} category.`;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
@@ -143,42 +144,34 @@ function ItemPage() {
         {/* Add more Open Graph and Twitter Card tags as needed */}
       </Helmet>
 
-      {/* Header with Breadcrumb */}
-      <header className="bg-white shadow-sm border-b">
+      {/* Main App Header */}
+      <AppHeader />
+
+      {/* Secondary Breadcrumb Header */}
+      <header className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 transition-colors duration-300">
         <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Breadcrumb
-                items={[
-                  { label: "Home", path: "/" },
-                  {
-                    label: category.name,
-                    path: `/categories/${category.id}`,
-                    icon: category.icon,
-                  },
-                  { label: currentItem.name, path: `/categories/${category.id}/${letter}/${currentItem.id}` },
-                ]}
-              />
-            </div>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={toggleDarkMode}
-              className="rounded-full"
-            >
-              {isDarkMode ? (
-                <Sun className="w-4 h-4" />
-              ) : (
-                <Moon className="w-4 h-4" />
-              )}
-            </Button>
+          {/* Breadcrumb Row */}
+          <div className="flex items-center space-x-4 mb-3">
+            <Breadcrumb
+              items={[
+                { label: "Home", path: "/" },
+                {
+                  label: category.name,
+                  path: `/categories/${category.id}`,
+                  icon: category.icon,
+                },
+                { label: currentItem.name, path: `/categories/${category.id}/${letter}/${currentItem.id}` },
+              ]}
+            />
           </div>
-          <div className="mt-3">
-            <h1 className="text-lg font-semibold text-gray-900">
+
+          {/* Item Info */}
+          <div>
+            <h1 className="text-lg font-semibold text-gray-900 dark:text-white transition-colors duration-300">
               {currentItem.name}
             </h1>
             {hasMultiple && (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-300 transition-colors duration-300">
                 {currentItemIndex + 1} of {items.length} items
               </p>
             )}
@@ -195,8 +188,8 @@ function ItemPage() {
             onClick={(e) => currentLetterIndex === 0 && e.preventDefault()}
             className={`w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
               currentLetterIndex === 0
-                ? "bg-gray-100 text-gray-300 cursor-not-allowed"
-                : "bg-white text-gray-600 hover:bg-blue-50 hover:text-blue-600 shadow-lg hover:shadow-xl"
+                ? "bg-gray-100 dark:bg-gray-700 text-gray-300 dark:text-gray-500 cursor-not-allowed"
+                : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 shadow-lg hover:shadow-xl dark:shadow-gray-900/50"
             }`}
           >
             <svg
@@ -215,7 +208,7 @@ function ItemPage() {
           </Link>
 
           {/* Item Card */}
-          <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden w-full max-w-6xl">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl sm:rounded-3xl shadow-2xl dark:shadow-gray-900/50 overflow-hidden w-full max-w-6xl transition-colors duration-300">
             <div className="aspect-[4/3] relative">
               {currentItem.image && getImageUrl(currentItem.image) ? (
                 <img
@@ -254,17 +247,17 @@ function ItemPage() {
             </div>
 
             <div className="p-4 sm:p-8 md:p-12 text-center">
-              <h2 className="text-3xl sm:text-5xl md:text-6xl font-bold text-gray-900 mb-3 sm:mb-6">
+              <h2 className="text-3xl sm:text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-3 sm:mb-6 transition-colors duration-300">
                 {currentItem.name}
               </h2>
 
-              <p className="text-base sm:text-lg md:text-xl text-gray-600 mb-4 sm:mb-8 leading-relaxed">
+              <p className="text-base sm:text-lg md:text-xl text-gray-600 dark:text-gray-300 mb-4 sm:mb-8 leading-relaxed transition-colors duration-300">
                 {currentItem.description}
               </p>
 
               {currentItem.facts && currentItem.facts.length > 0 && (
-                <div className="bg-blue-50 rounded-xl p-4 sm:p-6 mb-4 sm:mb-8">
-                  <p className="text-blue-800 font-medium text-sm sm:text-base md:text-lg">
+                <div className="bg-blue-50 dark:bg-blue-900/30 rounded-xl p-4 sm:p-6 mb-4 sm:mb-8 transition-colors duration-300">
+                  <p className="text-blue-800 dark:text-blue-200 font-medium text-sm sm:text-base md:text-lg transition-colors duration-300">
                     💡 {currentItem.facts[0]}
                   </p>
                 </div>
@@ -275,7 +268,7 @@ function ItemPage() {
                   {currentItem.tags.slice(0, 5).map((tag) => (
                     <span
                       key={tag}
-                      className="px-3 py-1 sm:px-4 sm:py-2 bg-gray-100 text-gray-700 rounded-full text-sm sm:text-base"
+                      className="px-3 py-1 sm:px-4 sm:py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm sm:text-base transition-colors duration-300"
                     >
                       {tag}
                     </span>
@@ -287,7 +280,7 @@ function ItemPage() {
                 <div className="flex items-center justify-center space-x-3 sm:space-x-4 mt-4 sm:mt-8">
                   <button
                     onClick={handlePrevItem}
-                    className="px-4 py-2 sm:px-6 sm:py-3 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors font-medium text-sm sm:text-base"
+                    className="px-4 py-2 sm:px-6 sm:py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl transition-colors font-medium text-sm sm:text-base"
                   >
                     Previous
                   </button>
@@ -295,17 +288,17 @@ function ItemPage() {
                     {items.map((_, index) => (
                       <div
                         key={index}
-                        className={`w-2 h-2 rounded-full ${
+                        className={`w-2 h-2 rounded-full transition-colors duration-300 ${
                           index === currentItemIndex
-                            ? "bg-blue-500"
-                            : "bg-gray-300"
+                            ? "bg-blue-500 dark:bg-blue-400"
+                            : "bg-gray-300 dark:bg-gray-600"
                         }`}
                       />
                     ))}
                   </div>
                   <button
                     onClick={handleNextItem}
-                    className="px-4 py-2 sm:px-6 sm:py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl transition-colors font-medium text-sm sm:text-base"
+                    className="px-4 py-2 sm:px-6 sm:py-3 bg-blue-500 dark:bg-blue-600 hover:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-xl transition-colors font-medium text-sm sm:text-base"
                   >
                     Next
                   </button>
@@ -320,8 +313,8 @@ function ItemPage() {
             onClick={(e) => currentLetterIndex === lettersWithItems.length - 1 && e.preventDefault()}
             className={`w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
               currentLetterIndex === lettersWithItems.length - 1
-                ? "bg-gray-100 text-gray-300 cursor-not-allowed"
-                : "bg-white text-gray-600 hover:bg-blue-50 hover:text-blue-600 shadow-lg hover:shadow-xl"
+                ? "bg-gray-100 dark:bg-gray-700 text-gray-300 dark:text-gray-500 cursor-not-allowed"
+                : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 shadow-lg hover:shadow-xl dark:shadow-gray-900/50"
             }`}
           >
             <svg
@@ -342,14 +335,16 @@ function ItemPage() {
 
         {/* Letter Indicator */}
         <div className="text-center mt-4 sm:mt-6">
-          <div className="inline-flex items-center px-3 py-1 sm:px-4 sm:py-2 bg-white rounded-full shadow-sm border">
-            <span className="text-xs sm:text-sm font-medium text-gray-600">
+          <div className="inline-flex items-center px-3 py-1 sm:px-4 sm:py-2 bg-white dark:bg-gray-800 rounded-full shadow-sm border dark:border-gray-700 transition-colors duration-300">
+            <span className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300 transition-colors duration-300">
               Letter {letter} • {currentLetterIndex + 1} of{" "}
               {lettersWithItems.length}
             </span>
           </div>
         </div>
       </div>
+
+      <AppFooter />
     </div>
   );
 }
