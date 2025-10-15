@@ -5,7 +5,7 @@ import apiService from "../services/api.js";
 import Breadcrumb from "../components/Breadcrumb.jsx";
 import AppHeader from "../components/AppHeader.jsx";
 import AppFooter from "../components/AppFooter.jsx";
-import { getImageUrl } from "../utils/imageUtils.js";
+import { getResponsiveImageUrl } from "../utils/imageUtils.js";
 import { Helmet } from "react-helmet-async";
 import { useTheme } from '../contexts/ThemeContext.jsx';
 
@@ -124,7 +124,7 @@ function ItemPage() {
         <meta property="og:url" content={`https://everythingabc.com/categories/${categoryId}/${letter}/${itemId}`} />
         <meta property="og:type" content="article" />
         {currentItem.image && (
-          <meta property="og:image" content={getImageUrl(currentItem.image)} />
+          <meta property="og:image" content={getResponsiveImageUrl(currentItem, { context: 'detail' })} />
         )}
         {/* Image Schema */}
         {currentItem.image && (
@@ -133,7 +133,7 @@ function ItemPage() {
               {
                 "@context": "https://schema.org",
                 "@type": "ImageObject",
-                "contentUrl": "${getImageUrl(currentItem.image)}",
+                "contentUrl": "${getResponsiveImageUrl(currentItem, { context: 'detail' })}",
                 "description": "Clear picture of ${currentItem.name} for educational vocabulary learning on EverythingABC",
                 "name": "${currentItem.name}",
                 "educationalUse": "Vocabulary building"
@@ -210,24 +210,27 @@ function ItemPage() {
           {/* Item Card */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl sm:rounded-3xl shadow-2xl dark:shadow-gray-900/50 overflow-hidden w-full max-w-6xl transition-colors duration-300">
             <div className="aspect-[4/3] relative">
-              {currentItem.image && getImageUrl(currentItem.image) ? (
-                <img
-                  src={getImageUrl(currentItem.image)}
-                  alt={`${currentItem.name} picture for ${category.name} category on EverythingABC`}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                  onError={(e) => {
-                    e.target.style.display = "none";
-                    e.target.nextSibling.style.display = "flex";
-                  }}
-                />
-              ) : null}
+              {(() => {
+                const responsiveImageUrl = getResponsiveImageUrl(currentItem, { context: 'detail' });
+                return responsiveImageUrl ? (
+                  <img
+                    src={responsiveImageUrl}
+                    alt={`${currentItem.name} picture for ${category.name} category on EverythingABC`}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    onError={(e) => {
+                      e.target.style.display = "none";
+                      e.target.nextSibling.style.display = "flex";
+                    }}
+                  />
+                ) : null;
+              })()}
               <div
                 className="w-full h-full flex items-center justify-center text-4xl sm:text-6xl"
                 style={{
                   backgroundColor:
                     getCategoryGradient(category.color).split(",")[0] + "20",
-                  display: currentItem.image && getImageUrl(currentItem.image) ? "none" : "flex",
+                  display: getResponsiveImageUrl(currentItem, { context: 'detail' }) ? "none" : "flex",
                 }}
               >
                 📷
