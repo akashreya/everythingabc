@@ -5,9 +5,9 @@ import apiService from "../services/api.js";
 import Breadcrumb from "../components/Breadcrumb.jsx";
 import AppHeader from "../components/AppHeader.jsx";
 import AppFooter from "../components/AppFooter.jsx";
-import { getImageUrl } from "../utils/imageUtils.js";
+import { getResponsiveImageUrl } from "../utils/imageUtils.js";
 import { Helmet } from "react-helmet-async";
-import { useTheme } from '../contexts/ThemeContext.jsx';
+import { useTheme } from "../contexts/ThemeContext.jsx";
 
 // Helper function to convert Tailwind gradient colors to actual CSS colors
 const getCategoryGradient = (gradientString) => {
@@ -55,7 +55,9 @@ function CategoryPage() {
   }, [category]);
 
   const getLetterItems = (letter) => {
-    return (category?.items[letter] || []).filter(item => getImageUrl(item.image));
+    return (category?.items[letter] || []).filter((item) =>
+      getResponsiveImageUrl(item, { size: "medium" })
+    );
   };
 
   const hasItems = (letter) => {
@@ -86,8 +88,14 @@ function CategoryPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-background dark:bg-gray-900 flex flex-col items-center justify-center transition-colors duration-300">
-        <p className="text-red-600 dark:text-red-400 text-lg font-medium">Error: {error}</p>
-        <Button onClick={() => window.location.reload()} className="mt-4" variant="outline">
+        <p className="text-red-600 dark:text-red-400 text-lg font-medium">
+          Error: {error}
+        </p>
+        <Button
+          onClick={() => window.location.reload()}
+          className="mt-4"
+          variant="outline"
+        >
           Retry
         </Button>
       </div>
@@ -97,7 +105,9 @@ function CategoryPage() {
   if (!category) {
     return (
       <div className="min-h-screen bg-background dark:bg-gray-900 flex items-center justify-center transition-colors duration-300">
-        <p className="text-muted-foreground dark:text-gray-400">Category not found.</p>
+        <p className="text-muted-foreground dark:text-gray-400">
+          Category not found.
+        </p>
       </div>
     );
   }
@@ -110,7 +120,10 @@ function CategoryPage() {
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
-        <link rel="canonical" href={`https://everythingabc.com/categories/${categoryId}`} />
+        <link
+          rel="canonical"
+          href={`https://everythingabc.com/categories/${categoryId}`}
+        />
         {category && (
           <script type="application/ld+json">
             {`
@@ -152,8 +165,12 @@ function CategoryPage() {
 
           {/* Category Info */}
           <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white transition-colors duration-300">{category.name}</h1>
-            <p className="text-sm text-gray-600 dark:text-gray-300 transition-colors duration-300">{category.description}</p>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white transition-colors duration-300">
+              {category.name}
+            </h1>
+            <p className="text-sm text-gray-600 dark:text-gray-300 transition-colors duration-300">
+              {category.description}
+            </p>
           </div>
         </div>
       </header>
@@ -184,9 +201,7 @@ function CategoryPage() {
           {alphabet.map((letter) => {
             const letterHasItems = hasItems(letter);
             const items = getLetterItems(letter);
-            const displayItem = letterHasItems
-              ? randomizedItems[letter]
-              : null;
+            const displayItem = letterHasItems ? randomizedItems[letter] : null;
 
             return (
               <React.Fragment key={letter}>
@@ -204,24 +219,38 @@ function CategoryPage() {
                   >
                     <div className="h-full flex flex-col">
                       <div className="flex-1 relative min-h-0">
-                        {displayItem.image && getImageUrl(displayItem.image) ? (
-                          <img
-                            src={getImageUrl(displayItem.image)}
-                            alt={displayItem.imageAlt || `Image of ${displayItem.name}`}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.target.style.display = "none";
-                              e.target.nextSibling.style.display = "flex";
-                            }}
-                          />
-                        ) : null}
+                        {(() => {
+                          const mediumUrl = getResponsiveImageUrl(displayItem, {
+                            size: "medium",
+                          });
+                          return mediumUrl ? (
+                            <img
+                              src={mediumUrl}
+                              alt={
+                                displayItem.imageAlt ||
+                                `Image of ${displayItem.name}`
+                              }
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                              onError={(e) => {
+                                e.target.style.display = "none";
+                                e.target.nextSibling.style.display = "flex";
+                              }}
+                            />
+                          ) : null;
+                        })()}
                         <div
                           className="w-full h-full flex items-center justify-center text-4xl"
                           style={{
                             backgroundColor:
-                              getCategoryGradient(category.color).split(",")[0] +
-                              "20",
-                            display: displayItem.image && getImageUrl(displayItem.image) ? "none" : "flex",
+                              getCategoryGradient(category.color).split(
+                                ","
+                              )[0] + "20",
+                            display: getResponsiveImageUrl(displayItem, {
+                              size: "mediuum",
+                            })
+                              ? "none"
+                              : "flex",
                           }}
                         >
                           📷
@@ -269,7 +298,9 @@ function CategoryPage() {
                       >
                         {letter}
                       </div>
-                      <div className="text-xs text-gray-400 dark:text-gray-500">Coming soon</div>
+                      <div className="text-xs text-gray-400 dark:text-gray-500">
+                        Coming soon
+                      </div>
                     </div>
                   </div>
                 )}
