@@ -285,11 +285,11 @@ CategoryImageSchema.methods.reject = function(reason, details = null) {
 
 // Static methods
 CategoryImageSchema.statics.findByItem = function(itemId) {
-  return this.find({ itemId, status: 'approved' }).sort({ isPrimary: -1, 'qualityScore.overall': -1 });
+  return this.find({ itemId, status: 'approved' }).sort({ isPrimary: -1, 'qualityScore.overall': -1 }).lean();
 };
 
 CategoryImageSchema.statics.findPrimaryImage = function(itemId) {
-  return this.findOne({ itemId, isPrimary: true, status: 'approved' });
+  return this.findOne({ itemId, isPrimary: true, status: 'approved' }).lean();
 };
 
 CategoryImageSchema.statics.findByCategory = function(categoryId, options = {}) {
@@ -297,7 +297,7 @@ CategoryImageSchema.statics.findByCategory = function(categoryId, options = {}) 
   if (options.letter) {
     query.letter = options.letter.toUpperCase();
   }
-  return this.find(query).sort({ isPrimary: -1, 'qualityScore.overall': -1 });
+  return this.find(query).sort({ isPrimary: -1, 'qualityScore.overall': -1 }).lean();
 };
 
 CategoryImageSchema.statics.findByLetter = function(letter, options = {}) {
@@ -308,14 +308,14 @@ CategoryImageSchema.statics.findByLetter = function(letter, options = {}) {
   if (options.categoryId) {
     query.categoryId = options.categoryId;
   }
-  return this.find(query).sort({ 'qualityScore.overall': -1 });
+  return this.find(query).sort({ 'qualityScore.overall': -1 }).lean();
 };
 
 CategoryImageSchema.statics.getHighQualityImages = function(minScore = 8.0) {
   return this.find({
     status: 'approved',
     'qualityScore.overall': { $gte: minScore }
-  }).sort({ 'qualityScore.overall': -1 });
+  }).sort({ 'qualityScore.overall': -1 }).lean();
 };
 
 CategoryImageSchema.statics.getStatsByProvider = async function() {

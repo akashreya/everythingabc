@@ -183,40 +183,113 @@ router.get('/:letter/items', asyncHandler(async (req, res) => {
     status
   };
 
-  const items = await Item.findByLetter(upperLetter, options);
-  const total = await Item.countDocuments({
-    letter: upperLetter,
-    status,
-    ...(options.categories && { categoryId: { $in: options.categories } }),
-    ...(options.difficulty && { difficulty: { $lte: options.difficulty } })
-  });
+  // Build query to match categories endpoint approach
+  const query = { letter: upperLetter, status };
 
-  // Group items by category for better presentation
-  const itemsByCategory = items.reduce((acc, item) => {
-    if (!acc[item.categoryName]) {
-      acc[item.categoryName] = {
-        category: {
-          id: item.categoryId,
-          name: item.categoryName,
-          icon: item.categoryIcon,
-          color: item.categoryColor
+  if (options.categories && options.categories.length > 0) {
+    query.categoryId = { $in: options.categories };
+  }
+  if (options.difficulty) {
+    query.difficulty = { $lte: parseInt(options.difficulty) };
+  }
+
+  // Build sort option
+  let sortOption = {};
+  switch (options.sort) {
+    case 'name': sortOption = { name: 1 }; break;
+    case 'difficulty': sortOption = { difficulty: 1, name: 1 }; break;
+    case 'category':
+    default: sortOption = { categoryName: 1, name: 1 };
+  }
+
+  // Get items with only essential fields (matching categories endpoint)
+  const items = await Item.find(query)
+    .select('id name letter difficulty status categoryId categoryName')
+    .sort(sortOption)
+    .skip(parseInt(options.offset))
+    .limit(parseInt(options.limit))
+    .lean();
+
+  const total = await Item.countDocuments(query);
+
+  const baseUrl = `${req.protocol}://${req.get('host')}/api/v2`;
+
+  // Get random images for all items in one query for efficiency (matching categories endpoint)
+  const itemIds = items.map(item => item.id);
+  const CategoryImage = require('../../models/CategoryImage');
+
+  const randomImages = await Promise.all(
+    itemIds.map(async (itemId) => {
+      // Get a random image for this item
+      const randomImage = await CategoryImage.aggregate([
+        {
+          $match: {
+            itemId: itemId,
+            status: 'approved'
+          }
         },
-        items: []
+        { $sample: { size: 1 } },
+        {
+          $project: {
+            itemId: 1,
+            filePath: 1
+          }
+        }
+      ]);
+
+      return {
+        itemId,
+        image: randomImage[0] || null
       };
-    }
-    acc[item.categoryName].items.push(item);
+    })
+  );
+
+  // Create lookup map for images
+  const imageMap = randomImages.reduce((acc, item) => {
+    acc[item.itemId] = item.image;
     return acc;
   }, {});
 
+  // Transform to lightweight format with parent category context
+  const lightweightItems = items.map(item => ({
+    id: item.id,
+    name: item.name,
+    letter: item.letter,
+    difficulty: item.difficulty,
+    category_id: item.categoryId,
+    category_name: item.categoryName,
+    category_url: `${baseUrl}/categories/${item.categoryId}/`,
+    image_url: imageMap[item.id] ? imageMap[item.id].filePath : null,
+    url: `${baseUrl}/items/${item.id}/`
+  }));
+
+  // Group by category for additional context
+  const itemsByCategory = lightweightItems.reduce((acc, item) => {
+    const categoryName = items.find(i => i.id === item.id)?.categoryName || 'Unknown';
+    if (!acc[categoryName]) acc[categoryName] = [];
+    acc[categoryName].push(item);
+    return acc;
+  }, {});
+
+  // Build pagination URLs (matching categories endpoint)
+  const nextOffset = parseInt(options.offset) + parseInt(options.limit);
+  const prevOffset = Math.max(0, parseInt(options.offset) - parseInt(options.limit));
+  const hasNext = nextOffset < total;
+  const hasPrev = parseInt(options.offset) > 0;
+
   res.json({
     count: total,
-    results: items,
+    format: 'list',
+    next: hasNext ? `${baseUrl}/letters/${upperLetter}/items?offset=${nextOffset}&limit=${options.limit}` : null,
+    previous: hasPrev ? `${baseUrl}/letters/${upperLetter}/items?offset=${prevOffset}&limit=${options.limit}` : null,
+    items: lightweightItems,
     grouped_by_category: itemsByCategory,
     meta: {
+      response_size: 'lightweight with direct URLs + random images',
+      performance_gain: 'Minimal fields + rich linking + images ready for grid display',
       letter: upperLetter,
       filters: { categories, difficulty, sort },
       total_categories: Object.keys(itemsByCategory).length,
-      performance_note: `Letter browsing optimized for <50ms response time`,
       alphabet_navigation: {
         previous: letter === 'A' ? null : String.fromCharCode(letter.charCodeAt(0) - 1),
         next: letter === 'Z' ? null : String.fromCharCode(letter.charCodeAt(0) + 1)

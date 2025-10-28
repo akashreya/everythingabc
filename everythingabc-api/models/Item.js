@@ -426,7 +426,8 @@ ItemSchema.statics.findByLetter = function(letter, options = {}) {
     .sort(sortOption)
     .limit(options.limit || 20)
     .skip(options.offset || 0)
-    .populate('primaryImageId');
+    .populate('primaryImageId')
+    .lean();
 };
 
 /**
@@ -447,7 +448,8 @@ ItemSchema.statics.findByCategory = function(categoryId, options = {}) {
     .sort({ letter: 1, name: 1 })
     .limit(options.limit || 50)
     .skip(options.offset || 0)
-    .populate('primaryImageId');
+    .populate('primaryImageId')
+    .lean();
 };
 
 /**
@@ -468,7 +470,8 @@ ItemSchema.statics.findByPrimaryCategory = function(categoryId, options = {}) {
     .sort({ letter: 1, name: 1 })
     .limit(options.limit || 50)
     .skip(options.offset || 0)
-    .populate('primaryImageId');
+    .populate('primaryImageId')
+    .lean();
 };
 
 /**
@@ -489,7 +492,8 @@ ItemSchema.statics.findByCategoryLegacy = function(categoryId, options = {}) {
     .sort({ letter: 1, name: 1 })
     .limit(options.limit || 50)
     .skip(options.offset || 0)
-    .populate('primaryImageId');
+    .populate('primaryImageId')
+    .lean();
 };
 
 /**
@@ -517,7 +521,8 @@ ItemSchema.statics.searchItems = function(searchQuery, options = {}) {
     .sort({ score: { $meta: 'textScore' } })
     .limit(options.limit || 20)
     .skip(options.offset || 0)
-    .populate('primaryImageId');
+    .populate('primaryImageId')
+    .lean();
 };
 
 /**
