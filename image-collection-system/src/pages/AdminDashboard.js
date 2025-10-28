@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import axios from "axios";
 import {
   Users,
   Database,
@@ -12,8 +12,8 @@ import {
   Clock,
   BarChart3,
   Settings,
-  Shield
-} from 'lucide-react';
+  Shield,
+} from "lucide-react";
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
@@ -28,17 +28,43 @@ const AdminDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [statsResponse, activityResponse] = await Promise.all([
-        axios.get('/admin/dashboard/stats'),
-        axios.get('/admin/dashboard/activity')
-      ]);
+      // Use V2 API stats endpoint (note: using direct URL since we're now pointing to V2)
+      const statsResponse = await axios.get(
+        "http://localhost:3003/api/v2/stats/"
+      );
 
-      setStats(statsResponse.data.data);
-      setRecentActivity(activityResponse.data.data);
+      // Transform V2 response to match dashboard expectations
+      const v2Data = statsResponse.data;
+      const transformedStats = {
+        categories: {
+          total: v2Data.overview.total_categories || 0,
+        },
+        items: {
+          total: v2Data.overview.total_items || 0,
+          pending: 0, // V2 doesn't track pending status the same way
+        },
+        users: {
+          total: 1, // V2 doesn't have user count, placeholder
+        },
+      };
+
+      // Transform recent activity from V2 recent_additions
+      const transformedActivity = (
+        v2Data.popular_content?.recent_additions || []
+      ).map((item) => ({
+        action: "create",
+        resource: "item",
+        description: `Added ${item.name} to ${item.categoryName || "category"}`,
+        user: { firstName: "System", lastName: "User" },
+        timestamp: item.createdAt,
+      }));
+
+      setStats(transformedStats);
+      setRecentActivity(transformedActivity);
       setError(null);
     } catch (err) {
-      console.error('Failed to fetch dashboard data:', err);
-      setError('Failed to load dashboard data');
+      console.error("Failed to fetch dashboard data:", err);
+      setError("Failed to load dashboard data");
     } finally {
       setLoading(false);
     }
@@ -57,7 +83,9 @@ const AdminDashboard = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">Dashboard Error</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">
+            Dashboard Error
+          </h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <button
             onClick={fetchDashboardData}
@@ -72,26 +100,26 @@ const AdminDashboard = () => {
 
   const quickActions = [
     {
-      name: 'Manage Categories',
-      description: 'Create, edit, and organize content categories',
-      href: '/admin/categories',
+      name: "Manage Categories",
+      description: "Create, edit, and organize content categories",
+      href: "/admin/categories",
       icon: Database,
-      color: 'bg-blue-500'
+      color: "bg-blue-500",
     },
     {
-      name: 'Review Items',
-      description: 'Approve, reject, and moderate content items',
-      href: '/admin/items',
+      name: "Review Items",
+      description: "Approve, reject, and moderate content items",
+      href: "/admin/items",
       icon: Image,
-      color: 'bg-green-500'
+      color: "bg-green-500",
     },
     {
-      name: 'System Settings',
-      description: 'Configure system-wide settings and preferences',
-      href: '/settings',
+      name: "System Settings",
+      description: "Configure system-wide settings and preferences",
+      href: "/settings",
       icon: Settings,
-      color: 'bg-purple-500'
-    }
+      color: "bg-purple-500",
+    },
   ];
 
   return (
@@ -217,7 +245,9 @@ const AdminDashboard = () => {
                 className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 hover:shadow-md transition-shadow rounded-lg border border-gray-200"
               >
                 <div>
-                  <span className={`rounded-lg inline-flex p-3 ${action.color} text-white`}>
+                  <span
+                    className={`rounded-lg inline-flex p-3 ${action.color} text-white`}
+                  >
                     <Icon className="h-6 w-6" />
                   </span>
                 </div>
@@ -252,19 +282,20 @@ const AdminDashboard = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     <div className="flex-shrink-0">
-                      {activity.action === 'create' && (
+                      {activity.action === "create" && (
                         <CheckCircle className="h-5 w-5 text-green-400" />
                       )}
-                      {activity.action === 'update' && (
+                      {activity.action === "update" && (
                         <Activity className="h-5 w-5 text-blue-400" />
                       )}
-                      {activity.action === 'delete' && (
+                      {activity.action === "delete" && (
                         <AlertCircle className="h-5 w-5 text-red-400" />
                       )}
                     </div>
                     <div className="ml-4">
                       <p className="text-sm font-medium text-gray-900">
-                        {activity.description || `${activity.action} ${activity.resource}`}
+                        {activity.description ||
+                          `${activity.action} ${activity.resource}`}
                       </p>
                       <p className="text-sm text-gray-500">
                         by {activity.user?.firstName} {activity.user?.lastName}
@@ -295,19 +326,27 @@ const AdminDashboard = () => {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="flex items-center">
                 <CheckCircle className="h-5 w-5 text-green-400 mr-2" />
-                <span className="text-sm text-gray-600">Database Connected</span>
+                <span className="text-sm text-gray-600">
+                  Database Connected
+                </span>
               </div>
               <div className="flex items-center">
                 <CheckCircle className="h-5 w-5 text-green-400 mr-2" />
-                <span className="text-sm text-gray-600">API Services Online</span>
+                <span className="text-sm text-gray-600">
+                  API Services Online
+                </span>
               </div>
               <div className="flex items-center">
                 <CheckCircle className="h-5 w-5 text-green-400 mr-2" />
-                <span className="text-sm text-gray-600">Queue System Active</span>
+                <span className="text-sm text-gray-600">
+                  Queue System Active
+                </span>
               </div>
               <div className="flex items-center">
                 <CheckCircle className="h-5 w-5 text-green-400 mr-2" />
-                <span className="text-sm text-gray-600">Cloud Storage Ready</span>
+                <span className="text-sm text-gray-600">
+                  Cloud Storage Ready
+                </span>
               </div>
             </div>
           </div>

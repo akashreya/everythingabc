@@ -4,6 +4,8 @@ const { authenticateAdmin } = require('../middleware/adminAuth');
 const { requirePermission, PERMISSIONS } = require('../middleware/permissions');
 const AuditLog = require('../../models/AuditLog');
 const Category = require('../../models/Category');
+const Item = require('../../models/Item');
+const CategoryImage = require('../../models/CategoryImage');
 const asyncHandler = require('express-async-handler');
 
 // GET /api/v1/admin/categories - List all categories with statistics
@@ -36,8 +38,8 @@ router.get('/',
     let completedItems = 0;
     let publishedItems = 0;
 
-    const enhancedCategories = categories.map(category => {
-      const stats = calculateCategoryStats(category);
+    const enhancedCategories = await Promise.all(categories.map(async category => {
+      const stats = await calculateCategoryStats(category);
       totalItems += stats.totalItems;
       completedItems += stats.completedItems;
       publishedItems += stats.publishedItems;
@@ -58,7 +60,7 @@ router.get('/',
           createdAt: category.metadata?.createdAt || category.createdAt
         } : undefined
       };
-    });
+    }));
 
     res.json({
       success: true,
@@ -123,7 +125,7 @@ router.get('/:categoryId',
       responseData.items = items;
     }
 
-    responseData.metadata = calculateCategoryStats(category);
+    responseData.metadata = await calculateCategoryStats(category);
 
     res.json({
       success: true,
@@ -374,7 +376,7 @@ router.get('/:categoryId/stats',
       });
     }
 
-    const stats = calculateDetailedStats(category);
+    const stats = await calculateDetailedStats(category);
 
     res.json({
       success: true,
@@ -403,9 +405,11 @@ function formatItem(item) {
   };
 }
 
-function calculateCategoryStats(category) {
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  let totalItems = 0;
+async function calculateCategoryStats(category) {
+  // Query Item collection for this category's stats
+  const items = await Item.find({ categoryId: category.id }).lean();
+
+  let totalItems = items.length;
   let completedItems = 0;
   let publishedItems = 0;
   let pendingItems = 0;
@@ -413,23 +417,18 @@ function calculateCategoryStats(category) {
   let reviewItems = 0;
   let totalImages = 0;
 
-  alphabet.split('').forEach(letter => {
-    const items = category.items[letter] || [];
-    totalItems += items.length;
+  items.forEach(item => {
+    // Status tracking
+    if (item.status === 'published') publishedItems++;
+    else if (item.status === 'review') reviewItems++;
+    else if (item.status === 'draft') draftItems++;
+    else pendingItems++;
 
-    items.forEach(item => {
-      // Collection status
-      if (item.collectionStatus === 'complete') completedItems++;
-      else pendingItems++;
+    // Image count from imageIds array
+    totalImages += (item.imageIds || []).length;
 
-      // Publishing status
-      if (item.publishingStatus === 'published') publishedItems++;
-      else if (item.publishingStatus === 'review') reviewItems++;
-      else draftItems++;
-
-      // Image count
-      totalImages += (item.images || []).length;
-    });
+    // Check if item has sufficient images
+    if ((item.imageIds || []).length >= 1) completedItems++;
   });
 
   const avgImagesPerItem = totalItems > 0 ? (totalImages / totalItems).toFixed(1) : 0;
@@ -445,10 +444,14 @@ function calculateCategoryStats(category) {
   };
 }
 
-function calculateDetailedStats(category) {
+async function calculateDetailedStats(category) {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const itemsByLetter = {};
-  let totalItems = 0;
+
+  // Query all items for this category from Item collection
+  const items = await Item.find({ categoryId: category.id }).lean();
+
+  let totalItems = items.length;
   let completedItems = 0;
   let publishedItems = 0;
   let reviewItems = 0;
@@ -456,32 +459,44 @@ function calculateDetailedStats(category) {
   let pendingItems = 0;
   let totalImages = 0;
 
+  // Initialize letter counts
   alphabet.split('').forEach(letter => {
-    const items = category.items[letter] || [];
-    const completed = items.filter(i => i.collectionStatus === 'complete').length;
-    const published = items.filter(i => i.publishingStatus === 'published').length;
-
     itemsByLetter[letter] = {
-      total: items.length,
-      completed,
-      published
+      total: 0,
+      completed: 0,
+      published: 0
     };
-
-    totalItems += items.length;
-
-    items.forEach(item => {
-      if (item.collectionStatus === 'complete') completedItems++;
-      else pendingItems++;
-
-      if (item.publishingStatus === 'published') publishedItems++;
-      else if (item.publishingStatus === 'review') reviewItems++;
-      else draftItems++;
-
-      totalImages += (item.images || []).length;
-    });
   });
 
-  const completeness = alphabet.split('').filter(l => (category.items[l] || []).length > 0).length;
+  // Process items
+  items.forEach(item => {
+    const letter = item.letter;
+
+    // Count by letter
+    if (itemsByLetter[letter]) {
+      itemsByLetter[letter].total++;
+
+      if (item.status === 'published') {
+        itemsByLetter[letter].published++;
+      }
+
+      if ((item.imageIds || []).length >= 1) {
+        itemsByLetter[letter].completed++;
+      }
+    }
+
+    // Overall stats
+    if (item.status === 'published') publishedItems++;
+    else if (item.status === 'review') reviewItems++;
+    else if (item.status === 'draft') draftItems++;
+    else pendingItems++;
+
+    if ((item.imageIds || []).length >= 1) completedItems++;
+
+    totalImages += (item.imageIds || []).length;
+  });
+
+  const completeness = alphabet.split('').filter(l => itemsByLetter[l].total > 0).length;
   const completionRate = totalItems > 0 ? ((completedItems / totalItems) * 100).toFixed(2) : 0;
   const publishRate = totalItems > 0 ? ((publishedItems / totalItems) * 100).toFixed(2) : 0;
   const avgImagesPerItem = totalItems > 0 ? (totalImages / totalItems).toFixed(1) : 0;

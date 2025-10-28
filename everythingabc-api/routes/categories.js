@@ -89,9 +89,8 @@ router.get('/', asyncHandler(async (req, res) => {
   });
 
   res.json({
-    success: true,
-    data: formattedCategories,
-    count: formattedCategories.length
+    count: formattedCategories.length,
+    results: formattedCategories
   });
 }));
 
@@ -106,10 +105,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
     });
   }
 
-  res.json({
-    success: true,
-    data: formatCategoryResponse(category)
-  });
+  res.json(formatCategoryResponse(category));
 }));
 
 // GET /api/v1/categories/:id/letters/:letter - Get items for specific letter
@@ -136,14 +132,11 @@ router.get('/:id/letters/:letter', asyncHandler(async (req, res) => {
   const items = category.getItemsByLetter(upperLetter);
 
   res.json({
-    success: true,
-    data: {
-      categoryId: category.id,
-      categoryName: category.name,
-      letter: upperLetter,
-      items: items,
-      count: items.length
-    }
+    categoryId: category.id,
+    categoryName: category.name,
+    letter: upperLetter,
+    count: items.length,
+    results: items
   });
 }));
 
@@ -271,10 +264,9 @@ router.get('/search/:query', asyncHandler(async (req, res) => {
   });
 
   res.json({
-    success: true,
-    data: results,
     count: results.length,
-    query: query
+    query: query,
+    results: results
   });
 }));
 
@@ -351,14 +343,11 @@ router.get('/stats/overview', asyncHandler(async (req, res) => {
   }
 
   res.json({
-    success: true,
-    data: {
-      totalCategories,
-      totalItems,
-      totalLettersComplete,
-      avgCompleteness,
-      categoriesWithFullAlphabet: categories.filter(c => c.completeness === 26).length
-    }
+    totalCategories,
+    totalItems,
+    totalLettersComplete,
+    avgCompleteness,
+    categoriesWithFullAlphabet: categories.filter(c => c.completeness === 26).length
   });
 }));
 

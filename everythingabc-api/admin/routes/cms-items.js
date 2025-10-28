@@ -4,6 +4,8 @@ const { authenticateAdmin } = require('../middleware/adminAuth');
 const { requirePermission, PERMISSIONS } = require('../middleware/permissions');
 const AuditLog = require('../../models/AuditLog');
 const Category = require('../../models/Category');
+const Item = require('../../models/Item');
+const CategoryImage = require('../../models/CategoryImage');
 const asyncHandler = require('express-async-handler');
 
 // GET /api/v1/admin/categories/:categoryId/items - List items for category
@@ -22,6 +24,7 @@ router.get('/:categoryId/items',
       offset = 0
     } = req.query;
 
+    // Verify category exists
     const category = await Category.findOne({ id: categoryId }).lean();
     if (!category) {
       return res.status(404).json({
@@ -30,55 +33,49 @@ router.get('/:categoryId/items',
       });
     }
 
-    // Collect all items
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let allItems = [];
+    // Build query for Item collection
+    const query = { categoryId };
 
-    alphabet.split('').forEach(l => {
-      if (!letter || l === letter.toUpperCase()) {
-        const items = category.items[l] || [];
-        items.forEach(item => {
-          allItems.push({
-            ...formatItemDetailed(item),
-            categoryId: category.id,
-            letter: l
-          });
-        });
-      }
-    });
+    if (letter) {
+      query.letter = letter.toUpperCase();
+    }
 
-    // Apply filters
-    if (collectionStatus) {
-      allItems = allItems.filter(item => item.collectionStatus === collectionStatus);
-    }
-    if (publishingStatus) {
-      allItems = allItems.filter(item => item.publishingStatus === publishingStatus);
-    }
     if (search) {
       const searchLower = search.toLowerCase();
-      allItems = allItems.filter(item =>
-        item.name.toLowerCase().includes(searchLower) ||
-        (item.description && item.description.toLowerCase().includes(searchLower))
-      );
+      query.$or = [
+        { name: { $regex: searchLower, $options: 'i' } },
+        { description: { $regex: searchLower, $options: 'i' } }
+      ];
     }
 
-    // Sort items
-    allItems.sort((a, b) => {
-      if (sort === 'name') return a.name.localeCompare(b.name);
-      if (sort === 'created_at') return new Date(b.createdAt) - new Date(a.createdAt);
-      if (sort === 'updated_at') return new Date(b.updatedAt) - new Date(a.updatedAt);
-      if (sort === 'imageCount') return b.imageCount - a.imageCount;
-      return 0;
-    });
+    // Map status fields (handle legacy field names)
+    if (publishingStatus) {
+      query.status = publishingStatus; // Map to Item.status
+    }
 
-    // Apply pagination
-    const total = allItems.length;
-    const paginatedItems = allItems.slice(parseInt(offset), parseInt(offset) + parseInt(limit));
+    // Build sort
+    let sortObj = {};
+    if (sort === 'name') sortObj.name = 1;
+    else if (sort === 'created_at') sortObj.createdAt = -1;
+    else if (sort === 'updated_at') sortObj.updatedAt = -1;
+    else if (sort === 'imageCount') sortObj['metadata.imageCount'] = -1;
+    else sortObj.name = 1; // Default sort
+
+    // Query Item collection with pagination
+    const total = await Item.countDocuments(query);
+    const items = await Item.find(query)
+      .sort(sortObj)
+      .skip(parseInt(offset))
+      .limit(parseInt(limit))
+      .lean();
+
+    // Format items for response
+    const allItems = items.map(item => formatItemDetailed(item));
 
     res.json({
       success: true,
       data: {
-        items: paginatedItems,
+        items: allItems,
         total,
         page: {
           limit: parseInt(limit),
@@ -104,6 +101,7 @@ router.get('/:categoryId/items/:letter',
       });
     }
 
+    // Verify category exists
     const category = await Category.findOne({ id: categoryId }).lean();
     if (!category) {
       return res.status(404).json({
@@ -113,13 +111,23 @@ router.get('/:categoryId/items/:letter',
     }
 
     const upperLetter = letter.toUpperCase();
-    const items = (category.items[upperLetter] || []).map(item => ({
+
+    // Query Item collection for items in this letter
+    const items = await Item.find({
+      categoryId,
+      letter: upperLetter
+    })
+    .select('id name description status imageIds')
+    .sort({ name: 1 })
+    .lean();
+
+    const formattedItems = items.map(item => ({
       id: item.id,
       name: item.name,
       description: item.description,
-      collectionStatus: item.collectionStatus || 'pending',
-      publishingStatus: item.publishingStatus || 'draft',
-      imageCount: (item.images || []).length
+      collectionStatus: (item.imageIds || []).length > 0 ? 'complete' : 'pending',
+      publishingStatus: item.status || 'draft',
+      imageCount: (item.imageIds || []).length
     }));
 
     res.json({
@@ -127,8 +135,8 @@ router.get('/:categoryId/items/:letter',
       data: {
         categoryId: category.id,
         letter: upperLetter,
-        items,
-        total: items.length
+        items: formattedItems,
+        total: formattedItems.length
       }
     });
   })
@@ -158,6 +166,7 @@ router.post('/:categoryId/items',
       });
     }
 
+    // Verify category exists
     const category = await Category.findOne({ id: categoryId });
     if (!category) {
       return res.status(404).json({
@@ -169,45 +178,41 @@ router.post('/:categoryId/items',
     // Generate item ID
     const itemId = generateItemId(name);
 
-    // Check if item already exists
-    const existingItems = category.items[upperLetter] || [];
-    if (existingItems.some(i => i.id === itemId)) {
+    // Check if item already exists in Item collection
+    const existingItem = await Item.findOne({
+      id: itemId,
+      categoryId,
+      letter: upperLetter
+    });
+
+    if (existingItem) {
       return res.status(409).json({
         success: false,
         error: 'Item with this ID already exists in this letter'
       });
     }
 
-    // Create new item
-    const newItem = {
+    // Create new item in Item collection
+    const newItem = new Item({
       id: itemId,
       name: name.trim(),
+      letter: upperLetter,
+      categoryId,
+      categoryName: category.name,
+      categoryIcon: category.icon,
+      categoryColor: category.color,
       description: description || '',
       tags: tags || [],
       difficulty: difficulty || 1,
       facts: facts || [],
-      collectionStatus: 'pending',
-      publishingStatus: 'draft',
-      images: [],
+      status: 'draft',
+      imageIds: [],
       createdBy: req.user?.email || 'system',
       createdAt: new Date(),
       updatedAt: new Date()
-    };
+    });
 
-    // Add item to category
-    if (!category.items[upperLetter]) {
-      category.items[upperLetter] = [];
-    }
-    category.items[upperLetter].push(newItem);
-
-    // Update metadata
-    category.metadata.totalItems = (category.metadata.totalItems || 0) + 1;
-    category.metadata.pendingItems = (category.metadata.pendingItems || 0) + 1;
-    category.metadata.draftItems = (category.metadata.draftItems || 0) + 1;
-    category.metadata.lastUpdated = new Date();
-    category.lastModifiedBy = req.user?.email || 'system';
-
-    await category.save();
+    await newItem.save();
 
     // Log the creation
     await AuditLog.logAction({
@@ -234,8 +239,8 @@ router.post('/:categoryId/items',
           tags: newItem.tags,
           difficulty: newItem.difficulty,
           facts: newItem.facts,
-          collectionStatus: newItem.collectionStatus,
-          publishingStatus: newItem.publishingStatus,
+          collectionStatus: 'pending',
+          publishingStatus: newItem.status,
           imageCount: 0,
           metadata: {
             createdAt: newItem.createdAt,
@@ -243,7 +248,7 @@ router.post('/:categoryId/items',
           }
         }
       },
-      message: 'Item created successfully with status=pending, publishingStatus=draft'
+      message: 'Item created successfully in Items collection with status=draft'
     });
   })
 );
@@ -256,52 +261,17 @@ router.put('/items/:itemId',
     const { itemId } = req.params;
     const { name, description, tags, difficulty, facts } = req.body;
 
-    // Find category containing this item
-    const category = await Category.findOne({
-      $or: [
-        { 'items.A.id': itemId }, { 'items.B.id': itemId }, { 'items.C.id': itemId },
-        { 'items.D.id': itemId }, { 'items.E.id': itemId }, { 'items.F.id': itemId },
-        { 'items.G.id': itemId }, { 'items.H.id': itemId }, { 'items.I.id': itemId },
-        { 'items.J.id': itemId }, { 'items.K.id': itemId }, { 'items.L.id': itemId },
-        { 'items.M.id': itemId }, { 'items.N.id': itemId }, { 'items.O.id': itemId },
-        { 'items.P.id': itemId }, { 'items.Q.id': itemId }, { 'items.R.id': itemId },
-        { 'items.S.id': itemId }, { 'items.T.id': itemId }, { 'items.U.id': itemId },
-        { 'items.V.id': itemId }, { 'items.W.id': itemId }, { 'items.X.id': itemId },
-        { 'items.Y.id': itemId }, { 'items.Z.id': itemId }
-      ]
-    });
+    // Find item in Item collection
+    const item = await Item.findOne({ id: itemId });
 
-    if (!category) {
+    if (!item) {
       return res.status(404).json({
         success: false,
         error: 'Item not found'
       });
     }
 
-    // Find the item
-    let itemLetter = null;
-    let itemIndex = -1;
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-    for (const letter of alphabet) {
-      const items = category.items[letter] || [];
-      const index = items.findIndex(i => i.id === itemId);
-      if (index !== -1) {
-        itemLetter = letter;
-        itemIndex = index;
-        break;
-      }
-    }
-
-    if (!itemLetter) {
-      return res.status(404).json({
-        success: false,
-        error: 'Item not found'
-      });
-    }
-
-    const item = category.items[itemLetter][itemIndex];
-    const before = { ...item };
+    const before = item.toObject();
 
     // Update fields
     if (name) item.name = name.trim();
@@ -311,12 +281,8 @@ router.put('/items/:itemId',
     if (facts) item.facts = facts;
 
     item.updatedAt = new Date();
-    item.lastModifiedBy = req.user?.email || 'system';
 
-    category.metadata.lastUpdated = new Date();
-    category.lastModifiedBy = req.user?.email || 'system';
-
-    await category.save();
+    await item.save();
 
     // Log the update
     await AuditLog.logAction({
@@ -359,63 +325,29 @@ router.delete('/items/:itemId',
     const { itemId } = req.params;
     const { deleteImages = 'false' } = req.query;
 
-    // Find category containing this item
-    const category = await Category.findOne({
-      $or: [
-        { 'items.A.id': itemId }, { 'items.B.id': itemId }, { 'items.C.id': itemId },
-        { 'items.D.id': itemId }, { 'items.E.id': itemId }, { 'items.F.id': itemId },
-        { 'items.G.id': itemId }, { 'items.H.id': itemId }, { 'items.I.id': itemId },
-        { 'items.J.id': itemId }, { 'items.K.id': itemId }, { 'items.L.id': itemId },
-        { 'items.M.id': itemId }, { 'items.N.id': itemId }, { 'items.O.id': itemId },
-        { 'items.P.id': itemId }, { 'items.Q.id': itemId }, { 'items.R.id': itemId },
-        { 'items.S.id': itemId }, { 'items.T.id': itemId }, { 'items.U.id': itemId },
-        { 'items.V.id': itemId }, { 'items.W.id': itemId }, { 'items.X.id': itemId },
-        { 'items.Y.id': itemId }, { 'items.Z.id': itemId }
-      ]
-    });
+    // Find item in Item collection
+    const item = await Item.findOne({ id: itemId });
 
-    if (!category) {
+    if (!item) {
       return res.status(404).json({
         success: false,
         error: 'Item not found'
       });
     }
 
-    // Find and remove the item
-    let itemLetter = null;
-    let deletedItem = null;
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const deletedItemData = item.toObject();
+    const deletedImages = (item.imageIds || []).length;
 
-    for (const letter of alphabet) {
-      const items = category.items[letter] || [];
-      const index = items.findIndex(i => i.id === itemId);
-      if (index !== -1) {
-        itemLetter = letter;
-        deletedItem = items[index];
-        items.splice(index, 1);
-        break;
-      }
+    // Optionally delete associated images from CategoryImage collection
+    if (deleteImages === 'true') {
+      await CategoryImage.deleteMany({
+        itemId: item.id,
+        categoryId: item.categoryId
+      });
     }
 
-    const deletedImages = (deletedItem?.images || []).length;
-
-    // Update metadata
-    category.metadata.totalItems = Math.max((category.metadata.totalItems || 1) - 1, 0);
-    if (deletedItem?.collectionStatus === 'pending') {
-      category.metadata.pendingItems = Math.max((category.metadata.pendingItems || 1) - 1, 0);
-    } else {
-      category.metadata.completedItems = Math.max((category.metadata.completedItems || 1) - 1, 0);
-    }
-    if (deletedItem?.publishingStatus === 'draft') {
-      category.metadata.draftItems = Math.max((category.metadata.draftItems || 1) - 1, 0);
-    } else if (deletedItem?.publishingStatus === 'review') {
-      category.metadata.reviewItems = Math.max((category.metadata.reviewItems || 1) - 1, 0);
-    } else if (deletedItem?.publishingStatus === 'published') {
-      category.metadata.publishedItems = Math.max((category.metadata.publishedItems || 1) - 1, 0);
-    }
-    category.metadata.lastUpdated = new Date();
-
-    await category.save();
+    // Delete the item
+    await Item.deleteOne({ id: itemId });
 
     // Log the deletion
     await AuditLog.logAction({
@@ -424,10 +356,10 @@ router.delete('/items/:itemId',
       action: 'delete',
       resourceType: 'item',
       resourceId: itemId,
-      description: `Deleted item: ${deletedItem?.name}`,
+      description: `Deleted item: ${deletedItemData.name}`,
       ipAddress: req.ip,
       userAgent: req.get('User-Agent'),
-      changes: { before: deletedItem }
+      changes: { before: deletedItemData }
     });
 
     res.json({
@@ -452,21 +384,23 @@ function formatItemDetailed(item) {
   return {
     id: item.id,
     name: item.name,
+    letter: item.letter,
+    categoryId: item.categoryId,
     description: item.description,
     tags: item.tags || [],
     difficulty: item.difficulty || 1,
-    collectionStatus: item.collectionStatus || 'pending',
-    publishingStatus: item.publishingStatus || 'draft',
-    imageCount: (item.images || []).length,
-    images: (item.images || []).map(img => ({
-      imageId: img._id || img.sourceId,
-      url: img.filePath || img.sourceUrl,
-      isPrimary: img.isPrimary || false
+    collectionStatus: (item.imageIds || []).length > 0 ? 'complete' : 'pending',
+    publishingStatus: item.status || 'draft',
+    imageCount: (item.imageIds || []).length,
+    images: (item.imageIds || []).map(imgId => ({
+      imageId: imgId,
+      url: item.image, // Legacy field
+      isPrimary: false // Would need to populate from CategoryImage to get accurate value
     })),
     metadata: {
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
-      publishedAt: item.publishedAt || null
+      imageCount: item.metadata?.imageCount || 0
     }
   };
 }

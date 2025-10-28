@@ -10,21 +10,42 @@ class Database {
     this.mongoServer = null;
   }
 
+  /**
+   * Extract database name from MONGODB_URI or use fallback based on environment
+   */
+  getDbNameFromEnv() {
+    const mongoUri = process.env.MONGODB_URI;
+    if (mongoUri && mongoUri.includes('/')) {
+      const dbName = mongoUri.split('/').pop().split('?')[0];
+      if (dbName && dbName !== 'localhost:27017') {
+        return dbName;
+      }
+    }
+
+    // Fallback to environment-specific names
+    const env = process.env.NODE_ENV || 'development';
+    return `everythingabc_${env}`;
+  }
+
   async connect() {
     try {
       let mongoUri = process.env.MONGODB_URI;
 
-      // Use in-memory MongoDB for development if no local MongoDB
+      // Use in-memory MongoDB for development/testing environments
       if (process.env.USE_MEMORY_DB === 'true') {
-        console.log('🔧 Starting in-memory MongoDB for development...');
+        const dbName = this.getDbNameFromEnv();
+        console.log(`🔧 Starting in-memory MongoDB for ${process.env.NODE_ENV}...`);
         const { MongoMemoryServer } = require('mongodb-memory-server');
+
         this.mongoServer = await MongoMemoryServer.create({
           instance: {
-            dbName: 'everythingabc'
+            dbName: dbName,
+            port: process.env.NODE_ENV === 'test' ? undefined : 27018, // Use random port for test, specific for dev
           }
         });
         mongoUri = this.mongoServer.getUri();
         console.log(`📦 In-memory MongoDB started at: ${mongoUri}`);
+        console.log(`🗄️  Database: ${dbName}`);
       }
 
       // MongoDB native client for complex operations
@@ -35,17 +56,35 @@ class Database {
       });
 
       await this.client.connect();
-      this.db = this.client.db('everythingabc');
+
+      // Use the database name from the URI or the environment-specific name
+      const dbName = process.env.USE_MEMORY_DB === 'true'
+        ? this.getDbNameFromEnv()
+        : 'everythingabc';
+      this.db = this.client.db(dbName);
 
       // Mongoose for schema validation and middleware
-      this.mongooseConnection = await mongoose.connect(mongoUri, {
+      // Ensure Mongoose uses the same database as native client
+      const mongooseUri = process.env.USE_MEMORY_DB === 'true'
+        ? mongoUri.replace(/\/[^\/]*\?/, `/${dbName}?`).replace(/\/[^\/]*$/, `/${dbName}`)
+        : mongoUri;
+
+      this.mongooseConnection = await mongoose.connect(mongooseUri, {
         maxPoolSize: 10,
         serverSelectionTimeoutMS: 5000,
         socketTimeoutMS: 45000,
       });
 
       console.log('✅ Connected to MongoDB');
-      console.log(`📊 Database: ${this.db.databaseName}`);
+      console.log(`📊 Native Client Database: ${this.db.databaseName}`);
+      console.log(`📊 Mongoose Database: ${this.mongooseConnection.connection.db.databaseName}`);
+      console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
+      console.log(`💾 Using Memory DB: ${process.env.USE_MEMORY_DB === 'true' ? 'Yes' : 'No'}`);
+
+      // Auto-populate test data for in-memory database
+      if (process.env.USE_MEMORY_DB === 'true' && process.env.AUTO_POPULATE !== 'false') {
+        await this.populateTestData();
+      }
 
       return this.db;
     } catch (error) {
@@ -108,6 +147,46 @@ class Database {
     } catch (error) {
       console.error('❌ Failed to get database stats:', error);
       return null;
+    }
+  }
+
+  /**
+   * Auto-populate test data for in-memory database
+   */
+  async populateTestData() {
+    try {
+      console.log('🌱 Auto-populating test data...');
+
+      // Check if data already exists
+      const categoriesCollection = this.db.collection('categories');
+      const categoryCount = await categoriesCollection.countDocuments();
+
+      if (categoryCount > 0) {
+        console.log(`✅ Database already contains ${categoryCount} categories, skipping auto-population`);
+        return;
+      }
+
+      // Import test data from setup script
+      const { createTestData } = require('./scripts/test-data');
+      const testData = createTestData();
+
+      // Insert categories
+      await categoriesCollection.insertMany(testData.categories);
+
+      // Insert items
+      const itemsCollection = this.db.collection('items');
+      await itemsCollection.insertMany(testData.items);
+
+      // Insert images
+      const categoryImagesCollection = this.db.collection('categoryImages');
+      await categoryImagesCollection.insertMany(testData.images);
+
+      console.log('✅ Test data populated successfully');
+      console.log(`📊 Created ${testData.categories.length} categories, ${testData.items.length} items, ${testData.images.length} images`);
+
+    } catch (error) {
+      console.error('⚠️  Failed to auto-populate test data:', error.message);
+      // Don't throw - allow database to continue without test data
     }
   }
 }

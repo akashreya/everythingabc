@@ -20,6 +20,7 @@ const Collections = () => {
     getHealth,
     getAllCategories,
     getCategoryById,
+    getItemsByLetter,
     loading,
   } = useApi();
 
@@ -130,23 +131,27 @@ const Collections = () => {
   );
 
   const getItemsForCategoryLetter = useCallback(
-    (categoryName, letter) => {
-      // Find category ID from name
-      const category = fetchedCategories.find((cat) => cat.name === categoryName);
-      if (!category) return [];
+    async (categoryName, letter) => {
+      try {
+        // Find category ID from name
+        const category = fetchedCategories.find((cat) => cat.name === categoryName);
+        if (!category) return [];
 
-      // Look in the details cache
-      const categoryDetails = categoryDetailsCache.get(category.id);
+        // Use V2 API to get items by category and letter
+        const items = await getItemsByLetter(category.id, letter);
 
-      if (!categoryDetails || !categoryDetails.items || !categoryDetails.items[letter]) {
+        // Return item names from V2 API response
+        if (Array.isArray(items)) {
+          return items.map((item) => item.name || item.id);
+        }
+
+        return [];
+      } catch (error) {
+        console.error(`Error fetching items for ${categoryName} letter ${letter}:`, error);
         return [];
       }
-
-      // Items are objects in DB, not strings - return item names
-      const items = categoryDetails.items[letter] || [];
-      return items.map((item) => (typeof item === "string" ? item : item.name));
     },
-    [fetchedCategories, categoryDetailsCache]
+    [fetchedCategories, getItemsByLetter]
   );
 
   const getFlowerAlternatives = (flowerName) => {
@@ -288,8 +293,8 @@ const Collections = () => {
         // Fetch category details if not cached
         await fetchCategoryDetails(collectForm.category);
 
-        // getItemsForCategoryLetter will now read from cache
-        const items = getItemsForCategoryLetter(
+        // getItemsForCategoryLetter now uses V2 API
+        const items = await getItemsForCategoryLetter(
           collectForm.category,
           collectForm.letter
         );

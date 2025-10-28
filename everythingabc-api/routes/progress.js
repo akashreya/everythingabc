@@ -3,6 +3,7 @@ const asyncHandler = require('express-async-handler');
 const router = express.Router();
 
 const Category = require('../models/Category');
+const Item = require('../models/Item');
 const logger = require('winston');
 
 /**
@@ -24,56 +25,73 @@ router.get('/', asyncHandler(async (req, res) => {
       sortOrder = 'desc'
     } = req.query;
 
-    // Build match criteria
-    const matchCriteria = { status: 'active' };
-    if (category) matchCriteria.id = category;
+    // Build query for Item model
+    const query = { status: 'published' };
 
-    const categories = await Category.find(matchCriteria);
+    // Add category filter if provided (support both single category and multi-category items)
+    if (category) {
+      query.$or = [
+        { categoryId: category },
+        { categoryIds: { $in: [category] } }
+      ];
+    }
 
-    const progressData = [];
+    // Add status filter if provided - map to collectionStatus
+    if (status) {
+      switch (status) {
+        case 'completed':
+          query.collectionStatus = 'complete';
+          break;
+        case 'pending':
+          query.collectionStatus = 'pending';
+          break;
+        case 'in_progress':
+          // For now, treat as pending since we only have complete/pending
+          query.collectionStatus = 'pending';
+          break;
+      }
+    }
 
-    categories.forEach(cat => {
-      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    // Get items from database
+    const items = await Item.find(query).sort({ categoryId: 1, letter: 1, name: 1 });
 
-      alphabet.split('').forEach(letter => {
-        if (cat.items[letter] && cat.items[letter].length > 0) {
-          cat.items[letter].forEach(item => {
-            const progress = item.collectionProgress || {
-              status: 'pending',
-              targetCount: 3,
-              collectedCount: 0,
-              approvedCount: 0
-            };
+    // Transform to progress format
+    const progressData = items.map(item => {
+      // Calculate progress based on actual data
+      const hasImages = item.imageIds && item.imageIds.length > 0;
+      const imageCount = item.metadata?.imageCount || item.imageIds?.length || 0;
 
-            // Filter by status if provided
-            if (status && progress.status !== status) return;
+      // Map collectionStatus to old status format
+      let itemStatus = 'pending';
+      if (item.collectionStatus === 'complete') {
+        itemStatus = 'completed';
+      } else if (imageCount > 0 && imageCount < 3) {
+        itemStatus = 'in_progress';
+      }
 
-            const completionPercent = progress.targetCount > 0
-              ? Math.round((progress.approvedCount / progress.targetCount) * 100)
-              : 0;
+      const targetCount = 3; // Standard target
+      const approvedCount = item.collectionStatus === 'complete' ? Math.min(imageCount, targetCount) : imageCount;
+      const completionPercent = targetCount > 0 ? Math.round((approvedCount / targetCount) * 100) : 0;
 
-            progressData.push({
-              categoryId: cat.id,
-              categoryName: cat.name,
-              letter,
-              itemId: item.id,
-              itemName: item.name,
-              status: progress.status,
-              targetCount: progress.targetCount,
-              collectedCount: progress.collectedCount || 0,
-              approvedCount: progress.approvedCount || 0,
-              completionPercent,
-              lastAttempt: progress.lastAttempt,
-              nextAttempt: progress.nextAttempt,
-              difficulty: progress.difficulty || 'medium',
-              averageQualityScore: progress.averageQualityScore || 0,
-              searchAttempts: progress.searchAttempts || 0,
-              createdAt: item.createdAt,
-              updatedAt: item.updatedAt
-            });
-          });
-        }
-      });
+      return {
+        categoryId: item.categoryId,
+        categoryName: item.categoryName,
+        letter: item.letter,
+        itemId: item.id,
+        itemName: item.name,
+        status: itemStatus,
+        targetCount,
+        collectedCount: imageCount,
+        approvedCount,
+        completionPercent: Math.min(completionPercent, 100), // Cap at 100%
+        lastAttempt: item.updatedAt,
+        nextAttempt: null,
+        difficulty: item.difficulty || 1,
+        averageQualityScore: 0, // We don't track this currently
+        searchAttempts: 0, // We don't track this currently
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt
+      };
     });
 
     // Sort the data
@@ -130,65 +148,73 @@ router.get('/', asyncHandler(async (req, res) => {
 // @access  Admin
 router.get('/summary', asyncHandler(async (req, res) => {
   try {
-    const categories = await Category.find({ status: 'active' });
+    // Get all items from database
+    const items = await Item.find({ status: 'published' });
 
-    const summary = categories.map(cat => {
-      let totalItems = 0;
-      let completedItems = 0;
-      let inProgressItems = 0;
-      let pendingItems = 0;
-      let totalImages = 0;
-      let approvedImages = 0;
+    // Get unique categories (include multi-category items)
+    const categoryMap = new Map();
 
-      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    items.forEach(item => {
+      // Handle both single and multi-category items
+      const categories = item.categoryIds && item.categoryIds.length > 0
+        ? item.categoryIds
+        : [item.categoryId];
 
-      alphabet.split('').forEach(letter => {
-        if (cat.items[letter] && cat.items[letter].length > 0) {
-          cat.items[letter].forEach(item => {
-            totalItems++;
-
-            const progress = item.collectionProgress || { status: 'pending' };
-
-            switch (progress.status) {
-              case 'completed':
-                completedItems++;
-                break;
-              case 'in_progress':
-              case 'collecting':
-                inProgressItems++;
-                break;
-              default:
-                pendingItems++;
-            }
-
-            if (item.images && item.images.length > 0) {
-              totalImages += item.images.length;
-              approvedImages += item.images.filter(img => img.status === 'approved').length;
-            }
+      categories.forEach(categoryId => {
+        if (!categoryMap.has(categoryId)) {
+          categoryMap.set(categoryId, {
+            categoryId,
+            categoryName: item.categoryName,
+            categoryIcon: item.categoryIcon || '📁',
+            categoryColor: item.categoryColor || '#6B7280',
+            totalItems: 0,
+            completedItems: 0,
+            inProgressItems: 0,
+            pendingItems: 0,
+            totalImages: 0,
+            approvedImages: 0,
+            lastUpdated: item.updatedAt
           });
         }
-      });
 
-      const completionPercent = totalItems > 0
-        ? Math.round((completedItems / totalItems) * 100)
+        const cat = categoryMap.get(categoryId);
+        cat.totalItems++;
+
+        const imageCount = item.metadata?.imageCount || item.imageIds?.length || 0;
+        cat.totalImages += imageCount;
+
+        // Map collectionStatus to progress status
+        if (item.collectionStatus === 'complete') {
+          cat.completedItems++;
+          cat.approvedImages += imageCount; // All images are considered approved when complete
+        } else if (imageCount > 0 && imageCount < 3) {
+          cat.inProgressItems++;
+          cat.approvedImages += imageCount; // Partial progress
+        } else {
+          cat.pendingItems++;
+        }
+
+        // Update last updated timestamp
+        if (item.updatedAt > cat.lastUpdated) {
+          cat.lastUpdated = item.updatedAt;
+        }
+      });
+    });
+
+    // Convert to array and calculate percentages
+    const summary = Array.from(categoryMap.values()).map(cat => {
+      const completionPercent = cat.totalItems > 0
+        ? Math.round((cat.completedItems / cat.totalItems) * 100)
+        : 0;
+
+      const imageApprovalRate = cat.totalImages > 0
+        ? Math.round((cat.approvedImages / cat.totalImages) * 100)
         : 0;
 
       return {
-        categoryId: cat.id,
-        categoryName: cat.name,
-        categoryIcon: cat.icon,
-        categoryColor: cat.color,
-        totalItems,
-        completedItems,
-        inProgressItems,
-        pendingItems,
+        ...cat,
         completionPercent,
-        totalImages,
-        approvedImages,
-        imageApprovalRate: totalImages > 0
-          ? Math.round((approvedImages / totalImages) * 100)
-          : 0,
-        lastUpdated: cat.updatedAt
+        imageApprovalRate
       };
     });
 
@@ -216,69 +242,90 @@ router.get('/category/:categoryId', asyncHandler(async (req, res) => {
   try {
     const { categoryId } = req.params;
 
-    const category = await Category.findOne({ id: categoryId });
-    if (!category) {
+    // Get items for this category (support multi-category items)
+    const items = await Item.find({
+      $or: [
+        { categoryId: categoryId },
+        { categoryIds: { $in: [categoryId] } }
+      ],
+      status: 'published'
+    }).sort({ letter: 1, name: 1 });
+
+    if (items.length === 0) {
       return res.status(404).json({
         success: false,
-        error: 'Category not found'
+        error: 'Category not found or has no items'
       });
     }
 
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const letterProgress = {};
 
+    // Initialize all letters
     alphabet.split('').forEach(letter => {
-      const items = category.items[letter] || [];
-
       letterProgress[letter] = {
         letter,
-        totalItems: items.length,
+        totalItems: 0,
         completedItems: 0,
         inProgressItems: 0,
         pendingItems: 0,
         items: []
       };
+    });
 
-      items.forEach(item => {
-        const progress = item.collectionProgress || { status: 'pending' };
+    // Process items by letter
+    items.forEach(item => {
+      const letter = item.letter;
+      if (!letterProgress[letter]) return; // Skip invalid letters
 
-        switch (progress.status) {
-          case 'completed':
-            letterProgress[letter].completedItems++;
-            break;
-          case 'in_progress':
-          case 'collecting':
-            letterProgress[letter].inProgressItems++;
-            break;
-          default:
-            letterProgress[letter].pendingItems++;
-        }
+      letterProgress[letter].totalItems++;
 
-        letterProgress[letter].items.push({
-          itemId: item.id,
-          itemName: item.name,
-          status: progress.status,
-          targetCount: progress.targetCount || 3,
-          approvedCount: progress.approvedCount || 0,
-          completionPercent: progress.targetCount > 0
-            ? Math.round((progress.approvedCount / progress.targetCount) * 100)
-            : 0,
-          lastAttempt: progress.lastAttempt,
-          difficulty: progress.difficulty || 'medium'
-        });
+      const imageCount = item.metadata?.imageCount || item.imageIds?.length || 0;
+
+      // Map collectionStatus to progress status
+      let itemStatus = 'pending';
+      if (item.collectionStatus === 'complete') {
+        itemStatus = 'completed';
+        letterProgress[letter].completedItems++;
+      } else if (imageCount > 0 && imageCount < 3) {
+        itemStatus = 'in_progress';
+        letterProgress[letter].inProgressItems++;
+      } else {
+        letterProgress[letter].pendingItems++;
+      }
+
+      const targetCount = 3;
+      const approvedCount = item.collectionStatus === 'complete' ? Math.min(imageCount, targetCount) : imageCount;
+      const completionPercent = targetCount > 0 ? Math.round((approvedCount / targetCount) * 100) : 0;
+
+      letterProgress[letter].items.push({
+        itemId: item.id,
+        itemName: item.name,
+        status: itemStatus,
+        targetCount,
+        approvedCount,
+        completionPercent: Math.min(completionPercent, 100),
+        lastAttempt: item.updatedAt,
+        difficulty: item.difficulty || 1
       });
+    });
 
-      // Calculate letter completion percentage
-      letterProgress[letter].completionPercent = letterProgress[letter].totalItems > 0
-        ? Math.round((letterProgress[letter].completedItems / letterProgress[letter].totalItems) * 100)
+    // Calculate letter completion percentages
+    Object.keys(letterProgress).forEach(letter => {
+      const letterData = letterProgress[letter];
+      letterData.completionPercent = letterData.totalItems > 0
+        ? Math.round((letterData.completedItems / letterData.totalItems) * 100)
         : 0;
     });
+
+    // Get category name from first item
+    const categoryName = items[0].categoryName || categoryId;
 
     res.json({
       success: true,
       data: {
-        categoryId: category.id,
-        categoryName: category.name,
+        categoryId,
+        categoryName,
         letterProgress
       }
     });

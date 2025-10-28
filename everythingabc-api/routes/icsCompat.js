@@ -4,10 +4,11 @@ const path = require('path');
 const router = express.Router();
 
 const Category = require('../models/Category');
+const Item = require('../models/Item');
+const CategoryImage = require('../models/CategoryImage');
 const logger = require('winston');
 
-// Import ImageCollector for enhanced search functionality
-const ImageCollector = require('../services/collection/ImageCollector');
+// Import apiClientManager for enhanced search functionality
 const ImageDownloader = require('../services/download/ImageDownloader');
 
 /**
@@ -36,6 +37,7 @@ router.post('/collect/selected', asyncHandler(async (req, res) => {
       });
     }
 
+    // Ensure category exists
     let categoryDoc = await Category.findOne({ id: category });
 
     // If category doesn't exist, create it
@@ -59,50 +61,54 @@ router.post('/collect/selected', asyncHandler(async (req, res) => {
       await categoryDoc.save();
     }
 
-    // Find or create the item in the category
+    // Find or create the item in the separated Items collection
     const upperLetter = letter.toUpperCase();
-    if (!categoryDoc.items[upperLetter]) {
-      categoryDoc.items[upperLetter] = [];
-    }
-    const items = categoryDoc.items[upperLetter];
-    let item = items.find(i => i.name.toLowerCase() === itemName.toLowerCase());
+    const itemId = itemName.toLowerCase().replace(/\s+/g, '-');
+
+    let item = await Item.findOne({
+      id: itemId,
+      categoryId: category,
+      letter: upperLetter
+    });
 
     // If item doesn't exist, create it
     if (!item) {
-      logger.info('Item not found, creating new item:', {
+      logger.info('Item not found, creating new item in Items collection:', {
         category,
         letter: upperLetter,
         itemName
       });
 
-      item = {
-        id: itemName.toLowerCase().replace(/\s+/g, '-'),
+      item = new Item({
+        id: itemId,
         name: itemName,
+        letter: upperLetter,
+        categoryId: category,
+        categoryName: categoryDoc.name,
+        categoryIcon: categoryDoc.icon,
+        categoryColor: categoryDoc.color,
         description: `A ${itemName.toLowerCase()}`,
         tags: [category],
         difficulty: 1,
         status: 'draft',
-        images: [],
-        collectionProgress: {
-          status: 'pending',
-          targetCount: 3,
-          collectedCount: 0,
-          approvedCount: 0
-        },
+        imageIds: [],
         createdAt: new Date(),
         createdBy: 'ics-system'
-      };
+      });
 
-      categoryDoc.items[upperLetter].push(item);
+      await item.save();
+
+      logger.info('Created new item in Items collection:', { itemId: item.id });
     }
 
     // Initialize ImageCollector service
     const imageCollector = new ImageCollector();
     await imageCollector.initialize();
 
-    // Process each selected image using ImageCollector (Direct S3 upload)
-    const processedImages = [];
+    // Process each selected image and create CategoryImage documents
+    const processedImageIds = [];
     const errors = [];
+    let primaryImageSet = false;
 
     for (let index = 0; index < selectedImages.length; index++) {
       const img = selectedImages[index];
@@ -141,12 +147,58 @@ router.post('/collect/selected', asyncHandler(async (req, res) => {
           }
         );
 
-        processedImages.push(imageRecord);
+        // Create CategoryImage document in separated collection
+        const categoryImage = new CategoryImage({
+          itemId: item.id,
+          categoryId: category,
+          letter: upperLetter,
+          filePath: imageRecord.filePath || imageRecord.sourceUrl,
+          fileName: imageRecord.fileName || `${itemId}-${index}.jpg`,
+          altText: imageRecord.altText || `${itemName} image`,
+          isPrimary: !primaryImageSet, // First image is primary
+          status: 'approved', // Manually selected images are auto-approved
+          source: {
+            provider: imageRecord.source || img.source || 'manual',
+            sourceId: imageRecord.sourceId || img.id,
+            sourceUrl: imageRecord.sourceUrl || img.url,
+            license: imageRecord.license?.type || img.source || 'manual',
+            attribution: imageRecord.license?.attribution || img.attribution || '',
+            commercial: true
+          },
+          metadata: {
+            width: imageRecord.metadata?.width || 800,
+            height: imageRecord.metadata?.height || 600,
+            fileSize: imageRecord.metadata?.fileSize || 0,
+            format: imageRecord.metadata?.format || 'jpg'
+          },
+          qualityScore: imageRecord.qualityScore || {
+            overall: 8.0,
+            breakdown: {
+              technical: 8.0,
+              relevance: 8.0,
+              aesthetic: 8.0,
+              usability: 8.0
+            }
+          },
+          approvedAt: new Date(),
+          approvedBy: 'ics-system',
+          createdBy: 'ics-system'
+        });
 
-        logger.info(`Successfully processed selected image ${index + 1}:`, {
-          source: imageData.source,
-          status: imageRecord.status,
-          cloudUpload: !!imageRecord.cloud
+        await categoryImage.save();
+        processedImageIds.push(categoryImage._id);
+
+        // Set as primary image on item if first
+        if (!primaryImageSet) {
+          item.primaryImageId = categoryImage._id;
+          item.image = categoryImage.filePath; // Legacy field for backward compatibility
+          primaryImageSet = true;
+        }
+
+        logger.info(`Successfully created CategoryImage ${index + 1}:`, {
+          imageId: categoryImage._id,
+          itemId: item.id,
+          isPrimary: categoryImage.isPrimary
         });
 
       } catch (error) {
@@ -162,7 +214,7 @@ router.post('/collect/selected', asyncHandler(async (req, res) => {
       }
     }
 
-    if (processedImages.length === 0) {
+    if (processedImageIds.length === 0) {
       return res.status(500).json({
         success: false,
         error: 'Failed to process any images',
@@ -170,59 +222,31 @@ router.post('/collect/selected', asyncHandler(async (req, res) => {
       });
     }
 
-    // Add to item's images array
-    if (!item.images) {
-      item.images = [];
-    }
-    item.images.push(...processedImages);
+    // Update item with new image references
+    item.imageIds = [...new Set([...item.imageIds, ...processedImageIds])]; // Deduplicate
+    item.metadata.imageCount = item.imageIds.length;
+    item.status = 'published'; // Auto-publish items with images
+    item.updatedAt = new Date();
 
-    // Update collection progress
-    if (!item.collectionProgress) {
-      item.collectionProgress = {
-        status: 'collecting',
-        targetCount: 3,
-        collectedCount: 0,
-        approvedCount: 0
-      };
-    }
+    await item.save();
 
-    item.collectionProgress.collectedCount = item.images.length;
-    item.collectionProgress.approvedCount = item.images.filter(img => img.status === 'approved').length;
+    logger.info(`Updated Item with ${processedImageIds.length} new images:`, {
+      itemId: item.id,
+      totalImages: item.imageIds.length
+    });
 
-    if (item.collectionProgress.approvedCount >= item.collectionProgress.targetCount) {
-      item.collectionProgress.status = 'completed';
-    } else if (item.collectionProgress.collectedCount > 0) {
-      item.collectionProgress.status = 'collecting';
-    }
-
-    item.collectionProgress.lastAttempt = new Date();
-
-    // CMS Integration: Auto-update collection status
-    if (item.collectionStatus === 'pending' && item.images.length > 0) {
-      item.collectionStatus = 'complete';
-      logger.info(`Auto-updated collectionStatus to 'complete' for ${category}/${letter}/${itemName}`);
-
-      if (categoryDoc.metadata?.pendingItems > 0) {
-        categoryDoc.metadata.pendingItems -= 1;
-      }
-      categoryDoc.metadata = categoryDoc.metadata || {};
-      categoryDoc.metadata.completedItems = (categoryDoc.metadata.completedItems || 0) + 1;
-    }
-
-    categoryDoc.markModified('items');
-    await categoryDoc.save();
-
-    logger.info(`Collected ${processedImages.length} images (Direct S3) for ${category}/${letter}/${itemName}`);
+    logger.info(`Collected ${processedImageIds.length} images (Direct S3) for ${category}/${letter}/${itemName}`);
 
     res.json({
       success: true,
-      message: `Successfully collected ${processedImages.length} images to S3`,
+      message: `Successfully collected ${processedImageIds.length} images to S3`,
       data: {
         category,
         letter: upperLetter,
         itemName,
-        imagesAdded: processedImages.length,
-        totalImages: item.images.length,
+        itemId: item.id,
+        imagesAdded: processedImageIds.length,
+        totalImages: item.imageIds.length,
         cloudUpload: true,
         errors: errors.length > 0 ? errors : undefined
       }
@@ -270,11 +294,11 @@ router.get('/search/enhanced', asyncHandler(async (req, res) => {
       maxResultsPerSource
     });
 
-    // Initialize ImageCollector
-    const imageCollector = new ImageCollector();
-    await imageCollector.initialize();
+    // Use apiClientManager directly for search (no need for full ImageCollector)
+    const { apiClientManager } = require('../services/apiClients');
+    await apiClientManager.initialize();
 
-    // Perform enhanced search using ImageCollector's searchAllSources method
+    // Perform enhanced search using apiClientManager directly
     const searchOptions = {
       maxResultsPerSource: parseInt(maxResultsPerSource),
       timeout: 30000,
@@ -282,7 +306,7 @@ router.get('/search/enhanced', asyncHandler(async (req, res) => {
       prioritySources: sources ? sources.split(',') : []
     };
 
-    const searchResults = await imageCollector.searchAllSources(
+    const searchResults = await apiClientManager.enhancedSearchAllSources(
       query,
       category || 'general',
       searchOptions
@@ -364,7 +388,7 @@ router.get('/search/enhanced', asyncHandler(async (req, res) => {
   }
 }));
 
-// @desc    Search categories/items
+// @desc    Search categories/items using Item collection
 // @route   GET /api/v1/categories/search/:query
 // @access  Public
 router.get('/categories/search/:query', asyncHandler(async (req, res) => {
@@ -379,46 +403,56 @@ router.get('/categories/search/:query', asyncHandler(async (req, res) => {
       });
     }
 
-    let matchQuery = { status: 'active' };
+    // Build query for Item collection
+    const searchQuery = {
+      status: { $in: ['published', 'draft'] } // Include both published and draft items
+    };
+
     if (category) {
-      matchQuery.id = category;
+      searchQuery.categoryId = category;
     }
 
-    const categories = await Category.find(matchQuery).limit(parseInt(limit));
-
-    // Search through items
-    const results = [];
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const searchTerm = query.toLowerCase();
 
-    categories.forEach(cat => {
-      alphabet.split('').forEach(letter => {
-        if (cat.items[letter]) {
-          cat.items[letter].forEach(item => {
-            if (item.name.toLowerCase().includes(searchTerm) ||
-                item.description.toLowerCase().includes(searchTerm) ||
-                item.tags?.some(tag => tag.toLowerCase().includes(searchTerm))) {
-              results.push({
-                ...item.toObject(),
-                categoryId: cat.id,
-                categoryName: cat.name,
-                letter: letter
-              });
-            }
-          });
-        }
-      });
-    });
+    // Use text search or regex search for name, description, and tags
+    searchQuery.$or = [
+      { name: { $regex: searchTerm, $options: 'i' } },
+      { description: { $regex: searchTerm, $options: 'i' } },
+      { tags: { $in: [new RegExp(searchTerm, 'i')] } },
+      { searchKeywords: { $in: [new RegExp(searchTerm, 'i')] } }
+    ];
+
+    // Query Item collection directly
+    const items = await Item.find(searchQuery)
+      .select('id name description tags letter categoryId categoryName categoryIcon categoryColor image imageIds')
+      .sort({ 'metadata.popularityScore': -1, name: 1 })
+      .limit(parseInt(limit))
+      .lean();
+
+    // Format results for backward compatibility
+    const results = items.map(item => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      tags: item.tags || [],
+      categoryId: item.categoryId,
+      categoryName: item.categoryName,
+      categoryIcon: item.categoryIcon,
+      categoryColor: item.categoryColor,
+      letter: item.letter,
+      image: item.image,
+      imageCount: item.imageIds?.length || 0
+    }));
 
     res.json({
       success: true,
-      data: results.slice(0, parseInt(limit)),
+      data: results,
       count: results.length,
       query: query
     });
 
   } catch (error) {
-    logger.error('Failed to search categories:', error);
+    logger.error('Failed to search items:', error);
     res.status(500).json({
       success: false,
       error: 'Search failed'

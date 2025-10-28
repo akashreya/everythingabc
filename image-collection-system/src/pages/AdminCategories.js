@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   Plus,
   Edit,
@@ -11,15 +11,15 @@ import {
   Clock,
   AlertCircle,
   Eye,
-  EyeOff
-} from 'lucide-react';
+  EyeOff,
+} from "lucide-react";
 
 const AdminCategories = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
@@ -29,12 +29,30 @@ const AdminCategories = () => {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/admin/categories');
-      setCategories(response.data.data);
+      // Use V2 categories endpoint with direct URL
+      const response = await axios.get(
+        "http://localhost:3003/api/v2/categories/"
+      );
+
+      // Transform V2 response to match expected format
+      const categories = response.data.results || response.data || [];
+      const transformedCategories = categories.map((category) => ({
+        id: category.id,
+        name: category.name,
+        status: category.status || "active",
+        icon: category.icon || "📁",
+        items: { total: category.metadata?.totalItems || 0 },
+        lastModified:
+          category.lastModified ||
+          category.createdAt ||
+          new Date().toISOString(),
+      }));
+
+      setCategories(transformedCategories);
       setError(null);
     } catch (err) {
-      console.error('Failed to fetch categories:', err);
-      setError('Failed to load categories');
+      console.error("Failed to fetch categories:", err);
+      setError("Failed to load categories");
     } finally {
       setLoading(false);
     }
@@ -43,16 +61,20 @@ const AdminCategories = () => {
   const updateCategoryStatus = async (categoryId, newStatus) => {
     try {
       await axios.patch(`/admin/categories/${categoryId}`, {
-        status: newStatus
+        status: newStatus,
       });
       await fetchCategories();
     } catch (err) {
-      console.error('Failed to update category status:', err);
+      console.error("Failed to update category status:", err);
     }
   };
 
   const deleteCategory = async (categoryId) => {
-    if (!window.confirm('Are you sure you want to delete this category? This action cannot be undone.')) {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this category? This action cannot be undone."
+      )
+    ) {
       return;
     }
 
@@ -60,24 +82,26 @@ const AdminCategories = () => {
       await axios.delete(`/admin/categories/${categoryId}`);
       await fetchCategories();
     } catch (err) {
-      console.error('Failed to delete category:', err);
+      console.error("Failed to delete category:", err);
     }
   };
 
-  const filteredCategories = categories.filter(category => {
-    const matchesSearch = category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         category.id.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || category.status === statusFilter;
+  const filteredCategories = categories.filter((category) => {
+    const matchesSearch =
+      category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      category.id.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      statusFilter === "all" || category.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'active':
+      case "active":
         return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'draft':
+      case "draft":
         return <Clock className="h-4 w-4 text-yellow-500" />;
-      case 'inactive':
+      case "inactive":
         return <EyeOff className="h-4 w-4 text-gray-500" />;
       default:
         return <AlertCircle className="h-4 w-4 text-red-500" />;
@@ -86,13 +110,17 @@ const AdminCategories = () => {
 
   const getStatusBadge = (status) => {
     const colors = {
-      active: 'bg-green-100 text-green-800',
-      draft: 'bg-yellow-100 text-yellow-800',
-      inactive: 'bg-gray-100 text-gray-800'
+      active: "bg-green-100 text-green-800",
+      draft: "bg-yellow-100 text-yellow-800",
+      inactive: "bg-gray-100 text-gray-800",
     };
 
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colors[status] || 'bg-red-100 text-red-800'}`}>
+      <span
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+          colors[status] || "bg-red-100 text-red-800"
+        }`}
+      >
         {status}
       </span>
     );
@@ -188,7 +216,7 @@ const AdminCategories = () => {
                   <div className="flex items-center min-w-0 flex-1">
                     <div className="flex-shrink-0">
                       <div className="h-10 w-10 rounded-lg bg-gray-200 flex items-center justify-center">
-                        <span className="text-lg">{category.icon || '📁'}</span>
+                        <span className="text-lg">{category.icon || "📁"}</span>
                       </div>
                     </div>
                     <div className="ml-4 min-w-0 flex-1">
@@ -205,20 +233,28 @@ const AdminCategories = () => {
                         <span className="mx-2">•</span>
                         <span>{category.items?.total || 0} items</span>
                         <span className="mx-2">•</span>
-                        <span>Modified {new Date(category.lastModified).toLocaleDateString()}</span>
+                        <span>
+                          Modified{" "}
+                          {new Date(category.lastModified).toLocaleDateString()}
+                        </span>
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
                     <button
-                      onClick={() => updateCategoryStatus(category.id, category.status === 'active' ? 'inactive' : 'active')}
+                      onClick={() =>
+                        updateCategoryStatus(
+                          category.id,
+                          category.status === "active" ? "inactive" : "active"
+                        )
+                      }
                       className={`px-3 py-1 rounded-md text-xs font-medium ${
-                        category.status === 'active'
-                          ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          : 'bg-green-100 text-green-700 hover:bg-green-200'
+                        category.status === "active"
+                          ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          : "bg-green-100 text-green-700 hover:bg-green-200"
                       }`}
                     >
-                      {category.status === 'active' ? 'Deactivate' : 'Activate'}
+                      {category.status === "active" ? "Deactivate" : "Activate"}
                     </button>
                     <button className="p-1 rounded-md text-gray-400 hover:text-gray-600">
                       <Edit className="h-4 w-4" />

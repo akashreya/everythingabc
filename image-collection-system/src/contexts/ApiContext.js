@@ -11,9 +11,11 @@ export const useApi = () => {
   return context;
 };
 
-// ICS is now pure React - all APIs go to EverythingABC API on port 3003
-const ICS_API_URL = process.env.REACT_APP_ICS_API_URL || "http://localhost:3003/api/v1";
-const ICS_ROOT_URL = process.env.REACT_APP_ICS_ROOT_URL || 'http://localhost:3003';
+// ICS is now pure React - all APIs go to EverythingABC API V2 on port 3003
+const ICS_API_URL =
+  process.env.REACT_APP_ICS_API_URL || "http://localhost:3003/api/v2";
+const ICS_ROOT_URL =
+  process.env.REACT_APP_ICS_ROOT_URL || "http://localhost:3003";
 
 // Create axios instance for Image Collection System - NO AUTHENTICATION NEEDED
 const icsApi = axios.create({
@@ -40,7 +42,7 @@ icsApi.interceptors.request.use(
   (config) => {
     // No authentication needed for ICS endpoints
     // Add timestamp to prevent caching (only for GET requests)
-    if (config.method === 'get') {
+    if (config.method === "get") {
       config.params = {
         ...config.params,
         _t: Date.now(),
@@ -59,8 +61,6 @@ icsApi.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
-
 
 export const ApiProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
@@ -127,7 +127,9 @@ export const ApiProvider = ({ children }) => {
   const getCloudStats = useCallback(async () => {
     return handleRequest(async () => {
       // Cloud stats not needed for ICS - return mock data
-      const response = { data: { stats: { uploaded: 0, pending: 0, failed: 0 } } };
+      const response = {
+        data: { stats: { uploaded: 0, pending: 0, failed: 0 } },
+      };
       return response.data;
     });
   }, [handleRequest]);
@@ -174,7 +176,9 @@ export const ApiProvider = ({ children }) => {
     async (s3Keys) => {
       return handleRequest(async () => {
         // CDN invalidation not needed for ICS - return mock success
-        const response = { data: { invalidated: s3Keys.length, success: true } };
+        const response = {
+          data: { invalidated: s3Keys.length, success: true },
+        };
         return response.data;
       });
     },
@@ -212,8 +216,14 @@ export const ApiProvider = ({ children }) => {
   const enhancedSearch = useCallback(
     async (itemName, category, options = {}) => {
       return handleRequest(async () => {
-        const response = await icsApi.get(`/search/enhanced`, {
-          params: { query: itemName, category, ...options },
+        // Use V1 enhanced search endpoint for image collection
+        const response = await axios.get(`${ICS_ROOT_URL}/api/v1/search/enhanced`, {
+          params: {
+            query: itemName,
+            category: category,
+            maxTotalResults: options.maxTotalResults || 100,
+            ...options
+          },
         });
         return response.data;
       });
@@ -258,7 +268,7 @@ export const ApiProvider = ({ children }) => {
 
   const getCategoryStats = useCallback(async () => {
     return handleRequest(async () => {
-      const response = await icsApi.get('/progress/summary');
+      const response = await icsApi.get("/progress/summary");
       return response.data;
     });
   }, [handleRequest]);
@@ -266,8 +276,8 @@ export const ApiProvider = ({ children }) => {
   const getProgressStats = useCallback(
     async (category = null) => {
       return handleRequest(async () => {
-        const params = category ? { category, limit: 1000 } : { limit: 1000 };
-        const response = await icsApi.get('/progress', { params });
+        const params = category ? { categoryId: category, limit: 1000 } : { limit: 1000 };
+        const response = await icsApi.get("/progress", { params });
         return response.data;
       });
     },
@@ -309,12 +319,12 @@ export const ApiProvider = ({ children }) => {
   const getProgress = useCallback(
     async (filters = {}, page = 1, limit = 100) => {
       return handleRequest(async () => {
-        const response = await icsApi.get('/progress', {
+        const response = await icsApi.get("/progress", {
           params: {
             ...filters,
             page,
-            limit
-          }
+            limit,
+          },
         });
         return response.data;
       });
@@ -325,11 +335,11 @@ export const ApiProvider = ({ children }) => {
   const getPendingItems = useCallback(
     async (limit = 50) => {
       return handleRequest(async () => {
-        const response = await icsApi.get('/progress', {
+        const response = await icsApi.get("/progress", {
           params: {
-            status: 'pending',
-            limit
-          }
+            collectionStatus: "pending",
+            limit,
+          },
         });
         return response.data;
       });
@@ -340,26 +350,29 @@ export const ApiProvider = ({ children }) => {
   // Client API methods
   const getClientStats = useCallback(async () => {
     return handleRequest(async () => {
-      const response = await icsApi.get('/clients');
+      const response = await icsApi.get("/clients");
       return response.data;
     });
   }, [handleRequest]);
 
   const getSystemStatus = useCallback(async () => {
     return handleRequest(async () => {
-      const response = await icsApi.get('/status');
+      const response = await icsApi.get("/status");
       return response.data;
     });
   }, [handleRequest]);
 
-  const getActivityFeed = useCallback(async (limit = 15) => {
-    return handleRequest(async () => {
-      const response = await icsApi.get('/dashboard/activity-feed', {
-        params: { limit }
+  const getActivityFeed = useCallback(
+    async (limit = 15) => {
+      return handleRequest(async () => {
+        const response = await icsApi.get("/dashboard/activity-feed", {
+          params: { limit },
+        });
+        return response.data;
       });
-      return response.data;
-    });
-  }, [handleRequest]);
+    },
+    [handleRequest]
+  );
 
   // Generation API methods
   const generateImages = useCallback(
@@ -416,7 +429,9 @@ export const ApiProvider = ({ children }) => {
     async (detailed = false) => {
       return handleRequest(async () => {
         // Health endpoints are not under /api, so use absolute path
-        const endpoint = detailed ? `${ICS_ROOT_URL}/health/detailed` : `${ICS_ROOT_URL}/health`;
+        const endpoint = detailed
+          ? `${ICS_ROOT_URL}/health/detailed`
+          : `${ICS_ROOT_URL}/health`;
         const response = await axios.get(endpoint, {
           timeout: 10000,
           params: { _t: Date.now() }, // prevent caching
@@ -432,21 +447,27 @@ export const ApiProvider = ({ children }) => {
   }, []);
 
   // Category API methods
-  const getAllCategories = useCallback(async (filters = {}) => {
-    return handleRequest(async () => {
-      const response = await icsApi.get("/categories", {
-        params: filters,
+  const getAllCategories = useCallback(
+    async (filters = {}) => {
+      return handleRequest(async () => {
+        const response = await icsApi.get("/categories", {
+          params: filters,
+        });
+        return response.data.data || response.data; // ICS API may have different response structure
       });
-      return response.data.data || response.data; // ICS API may have different response structure
-    });
-  }, [handleRequest]);
+    },
+    [handleRequest]
+  );
 
-  const getCategoryById = useCallback(async (categoryId) => {
-    return handleRequest(async () => {
-      const response = await icsApi.get(`/categories/${categoryId}`);
-      return response.data.data || response.data;
-    });
-  }, [handleRequest]);
+  const getCategoryById = useCallback(
+    async (categoryId) => {
+      return handleRequest(async () => {
+        const response = await icsApi.get(`/categories/${categoryId}`);
+        return response.data.data || response.data;
+      });
+    },
+    [handleRequest]
+  );
 
   // ============================================================================
   // CMS ADMIN API METHODS
@@ -468,7 +489,10 @@ export const ApiProvider = ({ children }) => {
   const updateCategory = useCallback(
     async (categoryId, categoryData) => {
       return handleRequest(async () => {
-        const response = await icsApi.put(`/admin/categories/${categoryId}`, categoryData);
+        const response = await icsApi.put(
+          `/admin/categories/${categoryId}`,
+          categoryData
+        );
         return response.data;
       });
     },
@@ -478,9 +502,12 @@ export const ApiProvider = ({ children }) => {
   const deleteCategory = useCallback(
     async (categoryId, permanent = false) => {
       return handleRequest(async () => {
-        const response = await icsApi.delete(`/admin/categories/${categoryId}`, {
-          params: { permanent },
-        });
+        const response = await icsApi.delete(
+          `/admin/categories/${categoryId}`,
+          {
+            params: { permanent },
+          }
+        );
         return response.data;
       });
     },
@@ -541,13 +568,16 @@ export const ApiProvider = ({ children }) => {
   const getItemsByLetter = useCallback(
     async (categoryId, letter) => {
       return handleRequest(async () => {
-        const response = await icsApi.get(
-          `/admin/categories/${categoryId}/items`,
-          {
-            params: { letter },
-          }
-        );
-        return response.data;
+        // Use V2 items API instead of admin endpoint
+        // Note: V2 API uses 'category' parameter, not 'categoryId'
+        const response = await icsApi.get("/items/", {
+          params: {
+            category: categoryId,
+            letter: letter,
+          },
+        });
+        // Return items array from V2 response structure
+        return response.data.results || response.data || [];
       });
     },
     [handleRequest]
@@ -558,16 +588,16 @@ export const ApiProvider = ({ children }) => {
     async (categoryId, itemId, status) => {
       return handleRequest(async () => {
         // Use approve/reject endpoints for status changes
-        if (status === 'approved') {
+        if (status === "approved") {
           const response = await icsApi.post(
             `/admin/categories/${categoryId}/items/${itemId}/approve`,
             { score: 5 }
           );
           return response.data;
-        } else if (status === 'rejected') {
+        } else if (status === "rejected") {
           const response = await icsApi.post(
             `/admin/categories/${categoryId}/items/${itemId}/reject`,
-            { reason: 'Quality issues' }
+            { reason: "Quality issues" }
           );
           return response.data;
         } else {
@@ -584,7 +614,7 @@ export const ApiProvider = ({ children }) => {
         const response = await icsApi.post(
           `/admin/categories/${categoryId}/items/bulk`,
           {
-            operation: 'update_status',
+            operation: "update_status",
             items: itemIds,
             data: { status },
           }
@@ -749,20 +779,25 @@ export const ApiProvider = ({ children }) => {
 
     // Import/Export methods
     exportCSV: useCallback(async (options = {}) => {
-      const { categoryId, publishingStatus, collectionStatus, includeMetadata = false } = options;
+      const {
+        categoryId,
+        publishingStatus,
+        collectionStatus,
+        includeMetadata = false,
+      } = options;
       const params = new URLSearchParams();
 
-      if (categoryId) params.append('categoryId', categoryId);
-      if (publishingStatus) params.append('publishingStatus', publishingStatus);
-      if (collectionStatus) params.append('collectionStatus', collectionStatus);
-      if (includeMetadata) params.append('includeMetadata', 'true');
+      if (categoryId) params.append("categoryId", categoryId);
+      if (publishingStatus) params.append("publishingStatus", publishingStatus);
+      if (collectionStatus) params.append("collectionStatus", collectionStatus);
+      if (includeMetadata) params.append("includeMetadata", "true");
 
       const url = `${ICS_API_URL}/admin/import-export/export/csv?${params.toString()}`;
 
       // Trigger download
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      link.download = '';
+      link.download = "";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -772,9 +807,9 @@ export const ApiProvider = ({ children }) => {
 
     downloadImportTemplate: useCallback(() => {
       const url = `${ICS_API_URL}/admin/import-export/import/template`;
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      link.download = 'import-template.csv';
+      link.download = "import-template.csv";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -782,15 +817,14 @@ export const ApiProvider = ({ children }) => {
     }, []),
 
     // Category Management
-    getAllCategories: useCallback(
-      async () => {
-        return handleRequest(async () => {
-          const response = await icsApi.get("/admin/categories");
-          return response.data.data?.categories || response.data.data || response.data;
-        });
-      },
-      [handleRequest]
-    ),
+    getAllCategories: useCallback(async () => {
+      return handleRequest(async () => {
+        const response = await icsApi.get("/admin/categories");
+        return (
+          response.data.data?.categories || response.data.data || response.data
+        );
+      });
+    }, [handleRequest]),
 
     createCategory: useCallback(
       async (categoryData) => {
@@ -805,7 +839,10 @@ export const ApiProvider = ({ children }) => {
     updateCategory: useCallback(
       async (categoryId, categoryData) => {
         return handleRequest(async () => {
-          const response = await icsApi.put(`/admin/categories/${categoryId}`, categoryData);
+          const response = await icsApi.put(
+            `/admin/categories/${categoryId}`,
+            categoryData
+          );
           return response.data;
         });
       },
@@ -815,7 +852,9 @@ export const ApiProvider = ({ children }) => {
     deleteCategory: useCallback(
       async (categoryId) => {
         return handleRequest(async () => {
-          const response = await icsApi.delete(`/admin/categories/${categoryId}?confirm=true`);
+          const response = await icsApi.delete(
+            `/admin/categories/${categoryId}?confirm=true`
+          );
           return response.data;
         });
       },

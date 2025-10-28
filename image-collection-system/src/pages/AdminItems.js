@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   Check,
   X,
@@ -10,17 +10,17 @@ import {
   AlertCircle,
   Image as ImageIcon,
   Calendar,
-  User
-} from 'lucide-react';
+  User,
+} from "lucide-react";
 
 const AdminItems = () => {
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('pending');
-  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("pending");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [selectedItems, setSelectedItems] = useState(new Set());
 
   useEffect(() => {
@@ -30,23 +30,53 @@ const AdminItems = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
+      // Use V2 API endpoints
       const [itemsResponse, categoriesResponse] = await Promise.all([
-        axios.get('/admin/items', {
+        axios.get("http://localhost:3003/api/v2/items/", {
           params: {
-            status: statusFilter === 'all' ? undefined : statusFilter,
-            category: categoryFilter === 'all' ? undefined : categoryFilter,
-            limit: 50
-          }
+            status: statusFilter === "all" ? undefined : statusFilter,
+            categoryId: categoryFilter === "all" ? undefined : categoryFilter,
+            limit: 50,
+          },
         }),
-        axios.get('/admin/categories')
+        axios.get("http://localhost:3003/api/v2/categories/"),
       ]);
 
-      setItems(itemsResponse.data.data);
-      setCategories(categoriesResponse.data.data);
+      // Transform V2 items response
+      const items = (
+        itemsResponse.data.results ||
+        itemsResponse.data ||
+        []
+      ).map((item) => ({
+        id: item.id,
+        name: item.name,
+        category: item.categoryName || item.categoryId,
+        letter: item.letter,
+        status: item.status || "approved", // V2 uses 'published' vs 'approved'
+        qualityScore: item.metadata?.qualityScore,
+        image: item.image
+          ? { thumbnail: item.image.thumbnail, url: item.image.url }
+          : null,
+        createdBy: { firstName: "System", lastName: "User" },
+        createdAt: item.createdAt,
+      }));
+
+      // Transform V2 categories response
+      const categories = (
+        categoriesResponse.data.results ||
+        categoriesResponse.data ||
+        []
+      ).map((category) => ({
+        id: category.id,
+        name: category.name,
+      }));
+
+      setItems(items);
+      setCategories(categories);
       setError(null);
     } catch (err) {
-      console.error('Failed to fetch data:', err);
-      setError('Failed to load items');
+      console.error("Failed to fetch data:", err);
+      setError("Failed to load items");
     } finally {
       setLoading(false);
     }
@@ -65,15 +95,16 @@ const AdminItems = () => {
   const handleBulkAction = async (action) => {
     if (selectedItems.size === 0) return;
 
-    const confirmMessage = action === 'approve'
-      ? `Approve ${selectedItems.size} items?`
-      : `Reject ${selectedItems.size} items?`;
+    const confirmMessage =
+      action === "approve"
+        ? `Approve ${selectedItems.size} items?`
+        : `Reject ${selectedItems.size} items?`;
 
     if (!window.confirm(confirmMessage)) return;
 
     try {
       await Promise.all(
-        Array.from(selectedItems).map(itemId =>
+        Array.from(selectedItems).map((itemId) =>
           axios.post(`/admin/items/${itemId}/${action}`)
         )
       );
@@ -98,26 +129,31 @@ const AdminItems = () => {
     if (selectedItems.size === filteredItems.length) {
       setSelectedItems(new Set());
     } else {
-      setSelectedItems(new Set(filteredItems.map(item => item.id)));
+      setSelectedItems(new Set(filteredItems.map((item) => item.id)));
     }
   };
 
-  const filteredItems = items.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.category.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredItems = items.filter((item) => {
+    const matchesSearch =
+      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.category.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
 
   const getStatusBadge = (status) => {
     const colors = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      approved: 'bg-green-100 text-green-800',
-      rejected: 'bg-red-100 text-red-800',
-      draft: 'bg-gray-100 text-gray-800'
+      pending: "bg-yellow-100 text-yellow-800",
+      approved: "bg-green-100 text-green-800",
+      rejected: "bg-red-100 text-red-800",
+      draft: "bg-gray-100 text-gray-800",
     };
 
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colors[status] || 'bg-gray-100 text-gray-800'}`}>
+      <span
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+          colors[status] || "bg-gray-100 text-gray-800"
+        }`}
+      >
         {status}
       </span>
     );
@@ -130,7 +166,9 @@ const AdminItems = () => {
         {[...Array(5)].map((_, i) => (
           <Star
             key={i}
-            className={`h-3 w-3 ${i < stars ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+            className={`h-3 w-3 ${
+              i < stars ? "text-yellow-400 fill-current" : "text-gray-300"
+            }`}
           />
         ))}
         <span className="ml-1 text-xs text-gray-500">({score}/10)</span>
@@ -161,14 +199,14 @@ const AdminItems = () => {
         {selectedItems.size > 0 && (
           <div className="mt-4 flex space-x-2 md:mt-0 md:ml-4">
             <button
-              onClick={() => handleBulkAction('approve')}
+              onClick={() => handleBulkAction("approve")}
               className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
             >
               <Check className="h-4 w-4 mr-1" />
               Approve ({selectedItems.size})
             </button>
             <button
-              onClick={() => handleBulkAction('reject')}
+              onClick={() => handleBulkAction("reject")}
               className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
             >
               <X className="h-4 w-4 mr-1" />
@@ -236,7 +274,10 @@ const AdminItems = () => {
               <label className="flex items-center">
                 <input
                   type="checkbox"
-                  checked={selectedItems.size === filteredItems.length && filteredItems.length > 0}
+                  checked={
+                    selectedItems.size === filteredItems.length &&
+                    filteredItems.length > 0
+                  }
                   onChange={selectAllItems}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
@@ -286,7 +327,9 @@ const AdminItems = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="text-lg font-medium text-gray-900">{item.name}</h3>
+                        <h3 className="text-lg font-medium text-gray-900">
+                          {item.name}
+                        </h3>
                         <p className="text-sm text-gray-500">
                           {item.category} • {item.letter}
                         </p>
@@ -316,16 +359,16 @@ const AdminItems = () => {
                     <button className="p-2 text-gray-400 hover:text-gray-600">
                       <Eye className="h-4 w-4" />
                     </button>
-                    {item.status === 'pending' && (
+                    {item.status === "pending" && (
                       <>
                         <button
-                          onClick={() => handleItemAction(item.id, 'approve')}
+                          onClick={() => handleItemAction(item.id, "approve")}
                           className="p-2 text-green-600 hover:text-green-800"
                         >
                           <Check className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => handleItemAction(item.id, 'reject')}
+                          onClick={() => handleItemAction(item.id, "reject")}
                           className="p-2 text-red-600 hover:text-red-800"
                         >
                           <X className="h-4 w-4" />
